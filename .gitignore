@@ -1,4 +1,6 @@
 data/
 __pycache__/
-*.npy
 .venv/
+catalog/embeddings.npy
+catalog/ids.json
+catalog/duplicates.json

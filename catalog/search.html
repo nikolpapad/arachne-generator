@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motif search</title>
+<style>
+  :root { --bg: #f5f0eb; --ink: #0a0a0a; --red: #a01020; --gold: #d4af37; --muted: #6b6259; --card: #fffdfa; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid #ddd3c8; padding: 10px 16px; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+  label { font-size: 12px; color: var(--muted); display: block; }
+  input[type=text], textarea { font: inherit; padding: 6px 8px; border: 1px solid #c9bdb0; border-radius: 4px; background: var(--card); color: var(--ink); }
+  #tag { width: 140px; }
+  #phrases { width: min(520px, 90vw); height: 54px; resize: vertical; }
+  button { font: inherit; padding: 6px 12px; border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 4px; cursor: pointer; }
+  button.primary { background: var(--ink); color: var(--bg); }
+  button:disabled { opacity: .4; cursor: default; }
+  #bar { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  #count { font-weight: 600; }
+  #count b { color: var(--red); font-size: 18px; }
+  #hint { color: var(--red); font-weight: 600; }
+  #mode { color: var(--muted); }
+  .keys { color: var(--muted); font-size: 12px; }
+  main { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; padding: 12px 16px 60px; }
+  .card { background: var(--card); border: 3px solid transparent; border-radius: 6px; padding: 6px; cursor: pointer; position: relative; }
+  .card img { width: 100%; aspect-ratio: 1; display: block; image-rendering: pixelated; }
+  .card .meta { display: flex; justify-content: space-between; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .card .tags { font-size: 11px; color: var(--muted); min-height: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .card .acts { display: flex; gap: 4px; margin-top: 4px; }
+  .card .acts button { padding: 2px 6px; font-size: 12px; flex: 1; }
+  .card.focus { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .card.yes { border-color: var(--gold); }
+  .card.yes::after { content: "✓"; position: absolute; top: 8px; right: 10px; background: var(--gold); color: var(--ink); border-radius: 50%; width: 24px; height: 24px; text-align: center; line-height: 24px; font-weight: 700; }
+  .card.no { opacity: .35; border-color: var(--red); }
+  .card.saved:not(.yes):not(.no) { border-style: dashed; border-color: #c9bdb0; }
+  .hidden { display: none; }
+  #empty { padding: 40px 16px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <form id="form">
+    <div><label for="tag">Tag to save</label><input id="tag" type="text" placeholder="putti" autocomplete="off"></div>
+    <div><label for="phrases">Search phrases, one per line (averaged)</label>
+      <textarea id="phrases" placeholder="cherub angel putto&#10;a crochet filet pattern of a cherub"></textarea></div>
+    <div><label>&nbsp;</label><button class="primary" type="submit">Search</button></div>
+    <div><label>&nbsp;</label><button id="save" type="button" disabled>Save</button></div>
+  </form>
+  <div id="bar">
+    <span id="count">Yes for <span id="tagname">—</span>: <b id="yes">0</b></span>
+    <span id="unsaved"></span>
+    <label style="display:inline;color:inherit"><input type="checkbox" id="hide"> hide already-reviewed for this tag</label>
+    <span id="mode"></span>
+    <span id="hint"></span>
+    <span class="keys">keys: y yes · n no · u clear · ←→↑↓ move · m more like this · o open large · ctrl+s save</span>
+  </div>
+</header>
+<main id="grid"></main>
+<div id="empty">Type a tag and a few phrases, then Search.</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let results = [];          // [{id, score}] in ranked order
+let saved = { tags: {}, reviewed: {} };
+let marks = {};            // unsaved marks for the current tag: id -> "yes" | "no"
+let focusIdx = 0;
+let noStreak = 0;
+const STOP_AFTER = 20;
+
+const tag = () => $("tag").value.trim().toLowerCase();
+const dirty = () => Object.keys(marks).length > 0;
+
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+  return res.json();
+}
+
+async function loadState() { saved = await api("/state"); }
+
+function savedMark(id) { return (saved.reviewed[tag()] || {})[id]; }
+function markOf(id) { return marks[id] || savedMark(id); }
+
+function yesCount() {
+  const t = tag();
+  if (!t) return 0;
+  const ids = new Set(Object.keys(saved.tags).filter((id) => saved.tags[id].includes(t)));
+  for (const [id, m] of Object.entries(marks)) m === "yes" ? ids.add(id) : ids.delete(id);
+  return ids.size;
+}
+
+function render() {
+  const grid = $("grid");
+  grid.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  results.forEach((r, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.i = i;
+    card.innerHTML = `<img loading="lazy" alt="${r.id}" src="/img/${r.id}.png">
+      <div class="meta"><span>${i + 1}. ${r.id}</span><span>${r.score.toFixed(3)}</span></div>
+      <div class="tags"></div>
+      <div class="acts"><button data-a="yes">y</button><button data-a="no">n</button><button data-a="like" title="more like this">≈ like</button></div>`;
+    frag.appendChild(card);
+  });
+  grid.appendChild(frag);
+  $("empty").classList.toggle("hidden", results.length > 0);
+  refresh();
+}
+
+function refresh() {
+  const hide = $("hide").checked;
+  document.querySelectorAll(".card").forEach((card) => {
+    const id = results[card.dataset.i].id;
+    const m = markOf(id);
+    card.classList.toggle("yes", m === "yes");
+    card.classList.toggle("no", m === "no");
+    card.classList.toggle("saved", !!savedMark(id));
+    card.classList.toggle("hidden", hide && !!savedMark(id) && !marks[id]);
+    card.querySelector(".tags").textContent = (saved.tags[id] || []).join(", ");
+  });
+  $("tagname").textContent = tag() || "—";
+  $("yes").textContent = yesCount();
+  const n = Object.keys(marks).length;
+  $("unsaved").textContent = n ? `${n} unsaved` : "";
+  $("save").disabled = !n || !tag();
+  $("hint").textContent = noStreak >= STOP_AFTER ? `${noStreak} "no" in a row — probably time to stop or try another phrasing` : "";
+  setFocus(focusIdx, false);
+}
+
+function visibleCards() { return [...document.querySelectorAll(".card:not(.hidden)")]; }
+
+function setFocus(i, scroll = true) {
+  const cards = visibleCards();
+  if (!cards.length) return;
+  document.querySelectorAll(".card.focus").forEach((c) => c.classList.remove("focus"));
+  focusIdx = Math.max(0, Math.min(i, cards.length - 1));
+  const card = cards[focusIdx];
+  card.classList.add("focus");
+  if (scroll) card.scrollIntoView({ block: "nearest" });
+}
+
+function focusedId() {
+  const card = visibleCards()[focusIdx];
+  return card ? results[card.dataset.i].id : null;
+}
+
+function mark(id, value) {
+  if (!tag()) { alert("Type a tag first (e.g. putti)."); $("tag").focus(); return; }
+  if (value === null) delete marks[id];
+  else if (value === savedMark(id)) delete marks[id];   // same as saved: nothing to save
+  else marks[id] = value;
+  if (value === "no") noStreak++;
+  if (value === "yes") noStreak = 0;
+  refresh();
+}
+
+async function search(body, label) {
+  $("mode").textContent = "searching…";
+  try {
+    results = await api("/search", body);
+    $("mode").textContent = label;
+    focusIdx = 0; noStreak = 0;
+    render();
+    window.scrollTo(0, 0);
+  } catch (e) { $("mode").textContent = "error: " + e.message; }
+}
+
+async function save() {
+  if (!dirty() || !tag()) return;
+  $("save").disabled = true;
+  try {
+    await api("/save", { tag: tag(), marks });
+    marks = {};
+    await loadState();
+    refresh();
+  } catch (e) { alert("Save failed: " + e.message); refresh(); }
+}
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const phrases = $("phrases").value.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (phrases.length) search({ phrases }, `ranked by: ${phrases.join(" | ")}`);
+});
+$("save").addEventListener("click", save);
+$("hide").addEventListener("change", () => { focusIdx = 0; refresh(); });
+
+let lastTag = "";
+$("tag").addEventListener("change", () => {
+  if (dirty() && !confirm(`You have ${Object.keys(marks).length} unsaved marks for "${lastTag}". Discard them?`)) {
+    $("tag").value = lastTag; return;
+  }
+  marks = {}; noStreak = 0; lastTag = tag(); refresh();
+});
+$("tag").addEventListener("focus", () => { lastTag = tag(); });
+
+$("grid").addEventListener("click", (e) => {
+  const card = e.target.closest(".card");
+  if (!card) return;
+  const id = results[card.dataset.i].id;
+  setFocus(visibleCards().indexOf(card), false);
+  const a = e.target.dataset.a;
+  if (a === "like") return search({ like: id }, `more like ${id}`);
+  if (a === "yes" || a === "no") return mark(id, markOf(id) === a ? null : a);
+  // click on the image cycles: unmarked → yes → no → unmarked
+  const m = markOf(id);
+  mark(id, m === undefined ? "yes" : m === "yes" ? "no" : null);
+});
+
+function columns() {
+  return getComputedStyle($("grid")).gridTemplateColumns.split(" ").length;
+}
+
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); save(); return; }
+  if (e.target.matches("input, textarea")) return;
+  const id = focusedId();
+  if (!id) return;
+  const k = e.key;
+  if (k === "y" || k === "n") { mark(id, k === "y" ? "yes" : "no"); setFocus(focusIdx + 1); }
+  else if (k === "u") mark(id, null);
+  else if (k === "ArrowRight" || k === "j") setFocus(focusIdx + 1);
+  else if (k === "ArrowLeft" || k === "k") setFocus(focusIdx - 1);
+  else if (k === "ArrowDown") setFocus(focusIdx + columns());
+  else if (k === "ArrowUp") setFocus(focusIdx - columns());
+  else if (k === "m") search({ like: id }, `more like ${id}`);
+  else if (k === "o") window.open(`/img/${id}.png?size=1200`, "_blank");
+  else return;
+  e.preventDefault();
+});
+
+window.addEventListener("beforeunload", (e) => { if (dirty()) { e.preventDefault(); e.returnValue = ""; } });
+
+loadState().then(refresh);
+</script>
+</body>
+</html>
