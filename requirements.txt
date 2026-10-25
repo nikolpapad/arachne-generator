@@ -1,0 +1,8 @@
+# Everything for the catalog tools (search, tagging, boxes) and the generator.
+# Install torch FIRST, with the build that fits the machine (see README "Setup"):
+#   CPU:  pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   GPU:  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+-r requirements-train.txt
+open_clip_torch>=3.3
+fastapi>=0.115
+uvicorn>=0.30

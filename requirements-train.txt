@@ -1,0 +1,6 @@
+# Only what generator/c_model/train.py needs (e.g. on the GPU machine).
+# Install torch first with the build that fits the machine:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu126
+numpy>=2.0
+pillow>=10.0
+scikit-image>=0.24
