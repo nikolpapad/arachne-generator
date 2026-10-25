@@ -15,7 +15,7 @@ a step-by-step walkthrough with explanations of how and why it works.
 cd ~/arachne-generator
 python3 -m venv .venv
 .venv/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-.venv/bin/pip install open_clip_torch numpy pillow fastapi uvicorn
+.venv/bin/pip install open_clip_torch numpy pillow fastapi uvicorn scikit-image
 ```
 
 `data/previews` is a link to the pattern files in pattern-app
