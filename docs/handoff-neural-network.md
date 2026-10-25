@@ -86,7 +86,12 @@ motif cut out.
   candidate box. Show the candidates in a small review page, modelled on
   `search.html`, where the owner accepts, adjusts or rejects each box. Save
   the result to `motif_boxes.json`:
-  `{"<pattern_id>": [[y, x, h, w], …]}` (one pattern may hold several).
+  `{"<tag>": {"<pattern_id>": [{"box": [y, x, h, w], "kind": "full"}, …]}}`
+  (one pattern may hold several; `[]` = reviewed, nothing usable; kind is
+  full / half / head / other). **Built:** `generator/c_model/boxes.py`
+  serves this page: `python generator/c_model/boxes.py human` →
+  http://127.0.0.1:8001. Its summary table counts boxes by kind × size
+  (box height in cells), to choose a consistent subgroup to train on.
 - Then cut the motif mask inside each box, and separate touching motifs by
   connected components where possible.
 - **Don't** accept boxes automatically without review. Many patterns are

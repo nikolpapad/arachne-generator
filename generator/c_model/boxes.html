@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motif boxes</title>
+<style>
+  :root { --bg: #f5f0eb; --ink: #0a0a0a; --red: #a01020; --gold: #d4af37; --muted: #6b6259; --card: #fffdfa; --line: #ddd3c8; --ok: #3d7a32; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); padding: 8px 16px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; }
+  header h1 b { color: var(--red); }
+  #progress { flex: 1; min-width: 160px; max-width: 360px; }
+  #progress .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  #progress .fill { height: 100%; background: var(--gold); width: 0; transition: width .2s; }
+  #progress .txt { font-size: 12px; color: var(--muted); }
+  button { font: inherit; padding: 6px 12px; border: 1px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 6px; cursor: pointer; }
+  button:disabled { opacity: .35; cursor: default; }
+  button.primary { background: var(--ink); color: var(--bg); }
+  button.danger { border-color: var(--red); color: var(--red); }
+  kbd { font: 11px ui-monospace, monospace; border: 1px solid #c9bdb0; border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; background: var(--card); color: var(--muted); }
+  #layout { display: flex; gap: 16px; padding: 12px 16px 40px; align-items: flex-start; }
+  #stage { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; position: sticky; top: 64px; }
+  canvas { display: block; cursor: crosshair; }
+  #pid { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; justify-content: space-between; gap: 8px; }
+  aside { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  h2 { font-size: 12px; margin: 0 0 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  #status { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  #status.todo { color: var(--muted); }
+  #status.need { color: var(--red); }
+  #status.done { color: var(--ok); }
+  #status.rejected { color: var(--red); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .actions button { padding: 10px; }
+  .kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kinds button { padding: 12px 8px; text-align: left; display: flex; flex-direction: column; gap: 2px; }
+  .kinds button small { color: var(--muted); font-size: 11px; }
+  .kinds button.on { background: var(--gold); border-color: var(--gold); }
+  .kinds button.on small { color: var(--ink); }
+  #kindbox.flash { animation: flash .6s 2; }
+  @keyframes flash { 50% { background: #f6d7db; } }
+  .tools { display: flex; gap: 8px; margin-top: 8px; }
+  .tools button { flex: 1; }
+  #boxinfo { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .list .row { display: flex; gap: 8px; align-items: center; padding: 6px 4px; border-radius: 4px; cursor: pointer; }
+  .list .row:hover { background: #f4ede4; }
+  .list .row.sel { background: #f3e7c4; }
+  .list .row .grow { flex: 1; }
+  .swatch { width: 12px; height: 12px; border-radius: 2px; border: 2px solid var(--gold); flex-shrink: 0; }
+  .swatch.sug { border-style: dashed; border-color: var(--muted); }
+  .sel .swatch { border-color: var(--red); }
+  .muted { color: var(--muted); font-size: 12px; }
+  table { border-collapse: collapse; font-size: 12px; width: 100%; }
+  td, th { padding: 3px 6px; text-align: right; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  td.big { font-weight: 700; color: var(--red); }
+  details summary { cursor: pointer; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  details ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+  details li { margin: 3px 0; }
+  label.opt { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-top: 10px; }
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 6px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: .9; }
+  @media (max-width: 900px) { #layout { flex-direction: column; } #stage { position: static; } aside { width: 100%; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Motif boxes · <b id="tag">—</b></h1>
+  <div id="progress"><div class="bar"><div class="fill" id="fill"></div></div><div class="txt" id="ptxt"></div></div>
+  <button id="prev" title="previous pattern (←)">← Prev</button>
+  <span id="pos" class="muted"></span>
+  <button id="skip" title="next pattern without saving">Skip →</button>
+  <button id="nextNew">Next unreviewed ⇥</button>
+</header>
+
+<div id="layout">
+  <div id="stage">
+    <canvas id="canvas"></canvas>
+    <div id="pid"><span id="pidname"></span><span>drag on the picture to draw a box</span></div>
+  </div>
+
+  <aside>
+    <section>
+      <div id="status"></div>
+      <div class="actions">
+        <button id="next" class="primary">✓ Save &amp; next <kbd>→</kbd></button>
+        <button id="reject" class="danger">✗ Nothing usable <kbd>x</kbd></button>
+      </div>
+      <label class="opt"><input type="checkbox" id="auto"> jump to next pattern right after choosing a kind (when every box has one)</label>
+    </section>
+
+    <section id="kindbox">
+      <h2>What is in the selected box?</h2>
+      <div id="boxinfo"></div>
+      <div class="kinds" id="kinds"></div>
+      <div class="tools">
+        <button id="tighten" title="shrink to the stitched cells inside">Tighten <kbd>t</kbd></button>
+        <button id="remove" class="danger">Remove <kbd>Del</kbd></button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Boxes</h2>
+      <div class="list" id="boxes"></div>
+      <div class="list" id="suggestions"></div>
+    </section>
+
+    <section>
+      <h2>Collected so far</h2>
+      <div id="summary"></div>
+    </section>
+
+    <section>
+      <details>
+        <summary>How to use</summary>
+        <ul>
+          <li>The best guess is already drawn as a box. If it fits, press its kind <kbd>1</kbd>–<kbd>4</kbd>.</li>
+          <li>If it doesn't fit: drag a <b>corner</b> to resize, drag the <b>inside</b> to move, or drag on an empty spot to draw a new one.</li>
+          <li>Grey dashed boxes are other guesses: click one to use it too.</li>
+          <li>Several figures? Give each its own box. <kbd>Tab</kbd> switches box.</li>
+          <li>Only box humans. A guess on something else (animal, vase…): remove it with <kbd>Del</kbd>.</li>
+          <li>No usable figure (too small, tangled with other motifs): press <kbd>x</kbd>.</li>
+          <li><kbd>t</kbd> shrinks the box to the stitches inside. <kbd>←</kbd> goes back.</li>
+        </ul>
+      </details>
+    </section>
+  </aside>
+</div>
+<div id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SIZES = [[0, 40, "small", "<40"], [40, 100, "medium", "40–99"], [100, 1e9, "large", "100+"]];  // box height in cells
+const KIND_TEXT = { full: ["Full figure", "head to feet"], half: ["Half figure", "bust, waist up"], head: ["Head only", "face / portrait"], other: ["Other human", "group, lying, partly hidden"] };
+let tag = "", kinds = [], ids = [], saved = {};
+let idx = 0, cur = null;     // cur: {id, h, w, rows, suggestions, boxes, sel, dirty}
+let scale = 1, maskImg = null, drag = null;
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const sizeOf = (h) => SIZES.find(([lo, hi]) => h >= lo && h < hi);
+const same = (a, b) => a.every((v, i) => v === b[i]);
+const taken = (sg) => cur.boxes.some((b) => same(b.box, sg.box));
+
+try { $("auto").checked = localStorage.getItem("boxes.auto") !== "0"; } catch { $("auto").checked = true; }
+$("auto").addEventListener("change", () => { try { localStorage.setItem("boxes.auto", $("auto").checked ? "1" : "0"); } catch {} });
+
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+  return res.json();
+}
+
+let toastTimer;
+function toast(msg) {
+  $("toast").textContent = msg;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 1200);
+}
+
+async function load(i) {
+  if (cur && cur.dirty && !confirm("This pattern has unsaved changes. Leave without saving?")) return;
+  idx = clamp(i, 0, ids.length - 1);
+  const id = ids[idx];
+  const data = await api(`/item/${id}`);
+  let boxes = (saved[id] || []).map((b) => ({ box: [...b.box], kind: b.kind }));
+  // not reviewed yet: start with the best guess already placed
+  if (saved[id] === undefined && data.suggestions.length) boxes = [{ box: [...data.suggestions[0].box], kind: null }];
+  cur = { id, ...data, boxes, sel: boxes.length ? 0 : -1, dirty: false };
+  buildMask();
+  fit();
+  render();
+}
+
+function buildMask() {
+  const c = document.createElement("canvas");
+  c.width = cur.w; c.height = cur.h;
+  const ctx = c.getContext("2d");
+  const img = ctx.createImageData(cur.w, cur.h);
+  for (let y = 0; y < cur.h; y++) {
+    const row = cur.rows[y];
+    for (let x = 0; x < cur.w; x++) {
+      const p = (y * cur.w + x) * 4, on = row[x] === "1";
+      img.data[p] = on ? 0x0a : 0xf5; img.data[p + 1] = on ? 0x0a : 0xf0; img.data[p + 2] = on ? 0x0a : 0xeb; img.data[p + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  maskImg = c;
+}
+
+function fit() {
+  const narrow = window.innerWidth <= 900;
+  const availW = Math.max(280, window.innerWidth - (narrow ? 50 : 410)), availH = Math.max(280, window.innerHeight - (narrow ? 200 : 110));
+  scale = Math.min(availW / cur.w, availH / cur.h, 16);
+  const cv = $("canvas");
+  cv.width = Math.round(cur.w * scale); cv.height = Math.round(cur.h * scale);
+}
+
+function draw() {
+  const cv = $("canvas"), ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(maskImg, 0, 0, cv.width, cv.height);
+  ctx.font = "600 13px system-ui";
+  const rect = ([y, x, h, w]) => [x * scale, y * scale, w * scale, h * scale];
+  cur.suggestions.forEach((s) => {
+    if (taken(s)) return;
+    ctx.setLineDash([6, 4]); ctx.strokeStyle = "#6b6259"; ctx.lineWidth = 2;
+    ctx.strokeRect(...rect(s.box));
+  });
+  ctx.setLineDash([]);
+  const pending = drag && drag.mode === "new" ? [{ box: drag.box, kind: null }] : [];
+  [...cur.boxes, ...pending].forEach((b, i) => {
+    const selected = i === cur.sel;
+    const [x, y, w, h] = rect(b.box);
+    const color = selected ? "#a01020" : "#d4af37";
+    ctx.fillStyle = selected ? "rgba(160,16,32,.08)" : "rgba(212,175,55,.08)";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = color; ctx.lineWidth = selected ? 3 : 2;
+    ctx.strokeRect(x, y, w, h);
+    const label = b.kind ? KIND_TEXT[b.kind][0] : "kind?";
+    const ty = y > 20 ? y - 20 : y;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, ty, ctx.measureText(label).width + 10, 20);
+    ctx.fillStyle = "#fffdfa"; ctx.fillText(label, x + 5, ty + 15);
+    if (selected) for (const [cx, cy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) {
+      ctx.fillStyle = "#fffdfa"; ctx.fillRect(cx - 6, cy - 6, 12, 12);
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(cx - 6, cy - 6, 12, 12);
+    }
+  });
+}
+
+function render() {
+  const reviewed = Object.keys(saved).length;
+  $("tag").textContent = tag;
+  $("fill").style.width = `${(100 * reviewed) / ids.length}%`;
+  $("ptxt").textContent = `${reviewed} of ${ids.length} reviewed`;
+  $("pos").textContent = `${idx + 1} / ${ids.length}`;
+  $("pidname").textContent = `${cur.id} · ${cur.h}×${cur.w} cells`;
+  $("prev").disabled = idx === 0;
+
+  const rec = saved[cur.id], missing = cur.boxes.filter((b) => !b.kind).length;
+  const s = $("status");
+  if (!cur.dirty && rec !== undefined) {
+    s.className = rec.length ? "done" : "rejected";
+    s.textContent = rec.length ? `✓ Saved · ${rec.length} box${rec.length > 1 ? "es" : ""}` : "✗ Saved as nothing usable";
+  } else if (!cur.boxes.length) {
+    s.className = "todo"; s.textContent = "Draw a box around the figure, or press x";
+  } else if (missing) {
+    s.className = "need"; s.textContent = `Choose a kind for ${missing === 1 ? "the box" : missing + " boxes"} (1–4)`;
+  } else {
+    s.className = "todo"; s.textContent = "Ready to save";
+  }
+
+  const b = cur.boxes[cur.sel];
+  $("kindbox").style.opacity = b ? 1 : .45;
+  $("boxinfo").textContent = b ? `${b.box[2]} cells tall × ${b.box[3]} wide · ${sizeOf(b.box[2])[2]}` : "No box selected";
+  $("kinds").innerHTML = kinds.map((k, j) =>
+    `<button data-k="${k}" class="${b && b.kind === k ? "on" : ""}" ${b ? "" : "disabled"}>
+       <span><kbd>${j + 1}</kbd> ${KIND_TEXT[k][0]}</span><small>${KIND_TEXT[k][1]}</small></button>`).join("");
+  $("tighten").disabled = $("remove").disabled = !b;
+
+  $("boxes").innerHTML = cur.boxes.length ? "" : '<div class="muted">No boxes yet.</div>';
+  cur.boxes.forEach((bx, i) => {
+    const row = document.createElement("div");
+    row.className = "row" + (i === cur.sel ? " sel" : "");
+    row.innerHTML = `<span class="swatch"></span><span class="grow">${bx.kind ? KIND_TEXT[bx.kind][0] : "<b style='color:var(--red)'>kind?</b>"}</span>
+      <span class="muted">${bx.box[2]}×${bx.box[3]}</span>`;
+    row.addEventListener("click", () => { cur.sel = i; render(); });
+    $("boxes").appendChild(row);
+  });
+
+  $("suggestions").innerHTML = "";
+  cur.suggestions.filter((sg) => !taken(sg)).forEach((sg) => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.title = "click to add this box";
+    row.innerHTML = `<span class="swatch sug"></span><span class="grow muted">other guess · click to add</span><span class="muted">${sg.box[2]}×${sg.box[3]}</span>`;
+    row.addEventListener("click", () => accept(sg));
+    $("suggestions").appendChild(row);
+  });
+
+  summary();
+  draw();
+}
+
+function summary() {
+  const counts = {};
+  let patterns = 0, rejected = 0, total = 0;
+  for (const boxes of Object.values(saved)) {
+    if (!boxes.length) { rejected++; continue; }
+    patterns++;
+    for (const b of boxes) {
+      const k = b.kind || "?", s = sizeOf(b.box[2])[2];
+      counts[k] = counts[k] || {};
+      counts[k][s] = (counts[k][s] || 0) + 1;
+      total++;
+    }
+  }
+  const max = Math.max(0, ...Object.values(counts).flatMap((c) => Object.values(c)));
+  const rows = kinds.concat(counts["?"] ? ["?"] : []).map((k) => {
+    const c = counts[k] || {};
+    return `<tr><td>${k === "?" ? "no kind" : KIND_TEXT[k][0]}</td>${SIZES.map((s) => `<td class="${c[s[2]] && c[s[2]] === max ? "big" : ""}">${c[s[2]] || 0}</td>`).join("")}
+      <td><b>${SIZES.reduce((n, s) => n + (c[s[2]] || 0), 0)}</b></td></tr>`;
+  }).join("");
+  $("summary").innerHTML = `<p class="muted" style="margin:0 0 8px">${total} boxes from ${patterns} patterns · ${rejected} with nothing usable</p>
+    <table><tr><th></th>${SIZES.map((s) => `<th>${s[2]}<br><span class="muted">${s[3]}</span></th>`).join("")}<th>all</th></tr>${rows}</table>
+    <p class="muted" style="margin:8px 0 0">Size = box height in cells. Red = biggest group so far.</p>`;
+}
+
+function changed() { cur.dirty = true; render(); }
+
+function accept(sg) {
+  if (taken(sg)) return;
+  cur.boxes.push({ box: [...sg.box], kind: null });
+  cur.sel = cur.boxes.length - 1;
+  changed();
+}
+
+function setKind(k) {
+  if (cur.sel < 0) return;
+  cur.boxes[cur.sel].kind = k;
+  const nextMissing = cur.boxes.findIndex((b) => !b.kind);
+  if (nextMissing >= 0) { cur.sel = nextMissing; changed(); return; }
+  changed();
+  if ($("auto").checked) next();
+}
+
+function remove() {
+  if (cur.sel < 0) return;
+  cur.boxes.splice(cur.sel, 1);
+  cur.sel = Math.min(cur.sel, cur.boxes.length - 1);
+  changed();
+}
+
+function tighten() {
+  if (cur.sel < 0) return;
+  const [y0, x0, h, w] = cur.boxes[cur.sel].box;
+  let top = Infinity, left = Infinity, bottom = -1, right = -1;
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+    if (cur.rows[y][x] !== "1") continue;
+    top = Math.min(top, y); bottom = Math.max(bottom, y); left = Math.min(left, x); right = Math.max(right, x);
+  }
+  if (bottom < 0) return;
+  cur.boxes[cur.sel].box = [top, left, bottom - top + 1, right - left + 1];
+  changed();
+}
+
+async function store(boxes) {
+  try {
+    await api("/save", { id: cur.id, boxes });
+    saved[cur.id] = boxes.map((b) => ({ box: [...b.box], kind: b.kind }));
+    cur.dirty = false;
+    return true;
+  } catch (e) { alert("Save failed: " + e.message); return false; }
+}
+
+async function next() {
+  if (!cur.boxes.length) { toast("Draw a box first, or press x for nothing usable"); return; }
+  const missing = cur.boxes.findIndex((b) => !b.kind);
+  if (missing >= 0) {
+    cur.sel = missing; render();
+    $("kindbox").classList.remove("flash"); void $("kindbox").offsetWidth; $("kindbox").classList.add("flash");
+    return;
+  }
+  if ((cur.dirty || saved[cur.id] === undefined) && !(await store(cur.boxes))) return;
+  toast(`Saved ${cur.id}`);
+  goAfterSave();
+}
+
+async function reject() {
+  cur.boxes = []; cur.sel = -1;
+  if (!(await store([]))) return;
+  toast(`${cur.id}: nothing usable`);
+  goAfterSave();
+}
+
+function goAfterSave() {
+  // carry on to the next pattern you haven't reviewed, or just the next one
+  const after = ids.findIndex((id, i) => i > idx && saved[id] === undefined);
+  if (after >= 0) load(after);
+  else if (idx < ids.length - 1) load(idx + 1);
+  else { render(); toast("That was the last pattern"); }
+}
+
+function nextUnreviewed() {
+  const after = ids.findIndex((id, i) => i > idx && saved[id] === undefined);
+  const any = after >= 0 ? after : ids.findIndex((id) => saved[id] === undefined);
+  if (any >= 0) load(any); else toast("Every pattern is reviewed 🎉");
+}
+
+// --- mouse: draw / move / resize, all in cell coordinates ---
+function cellAt(e) {
+  const r = $("canvas").getBoundingClientRect();
+  return [clamp(Math.floor((e.clientY - r.top) / scale), 0, cur.h - 1), clamp(Math.floor((e.clientX - r.left) / scale), 0, cur.w - 1)];
+}
+
+function hit(e) {
+  const r = $("canvas").getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  for (const i of [cur.sel, ...cur.boxes.keys()]) {  // corners: selected box first, then any box
+    if (i < 0) continue;
+    const [y, x, h, w] = cur.boxes[i].box;
+    const corners = [[y, x, y + h, x + w], [y, x + w, y + h, x], [y + h, x, y, x + w], [y + h, x + w, y, x]];
+    for (const [cy, cx, fy, fx] of corners)
+      if (Math.abs(px - cx * scale) < 10 && Math.abs(py - cy * scale) < 10) return { mode: "resize", i, fixed: [fy, fx] };
+  }
+  const [cy, cx] = cellAt(e);
+  const inside = ([y, x, h, w]) => cy >= y && cy < y + h && cx >= x && cx < x + w;
+  for (let i = cur.boxes.length - 1; i >= 0; i--)
+    if (inside(cur.boxes[i].box)) return { mode: "move", i, grab: [cy - cur.boxes[i].box[0], cx - cur.boxes[i].box[1]] };
+  const sg = cur.suggestions.find((s) => !taken(s) && inside(s.box));
+  if (sg) return { mode: "suggestion", sg, start: [cy, cx], box: [cy, cx, 1, 1] };
+  return { mode: "new", start: [cy, cx], box: [cy, cx, 1, 1] };
+}
+
+function spanBox([ay, ax], [by, bx]) {
+  return [Math.min(ay, by), Math.min(ax, bx), Math.abs(ay - by) + 1, Math.abs(ax - bx) + 1];
+}
+
+function cursorFor(e) {
+  if (drag) return;
+  const h = hit(e);
+  $("canvas").style.cursor = h.mode === "resize" ? "nwse-resize" : h.mode === "move" ? "move" : h.mode === "suggestion" ? "pointer" : "crosshair";
+}
+
+$("canvas").addEventListener("mousedown", (e) => {
+  drag = hit(e);
+  if (drag.mode === "move" || drag.mode === "resize") { cur.sel = drag.i; render(); }
+});
+$("canvas").addEventListener("mousemove", cursorFor);
+
+window.addEventListener("mousemove", (e) => {
+  if (!drag) return;
+  const [cy, cx] = cellAt(e);
+  if (drag.mode === "new" || drag.mode === "suggestion") {
+    drag.box = spanBox(drag.start, [cy, cx]);
+    if (drag.box[2] > 2 || drag.box[3] > 2) drag.mode = "new";  // dragging on a guess draws a new box instead
+  } else if (drag.mode === "move") {
+    const b = cur.boxes[drag.i].box;
+    b[0] = clamp(cy - drag.grab[0], 0, cur.h - b[2]); b[1] = clamp(cx - drag.grab[1], 0, cur.w - b[3]);
+    drag.moved = true;
+  } else {
+    // corners sit on cell edges: the fixed corner is exclusive, so step back one cell on the far side
+    const [fy, fx] = drag.fixed;
+    const y0 = cy < fy ? cy : fy, y1 = cy < fy ? fy - 1 : cy;
+    const x0 = cx < fx ? cx : fx, x1 = cx < fx ? fx - 1 : cx;
+    cur.boxes[drag.i].box = [y0, x0, Math.max(1, y1 - y0 + 1), Math.max(1, x1 - x0 + 1)];
+    drag.moved = true;
+  }
+  draw();
+});
+
+window.addEventListener("mouseup", () => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.mode === "suggestion") accept(d.sg);
+  else if (d.mode === "new" && d.box[2] >= 3 && d.box[3] >= 3) {
+    cur.boxes.push({ box: d.box, kind: null });
+    cur.sel = cur.boxes.length - 1;
+    changed();
+  } else if (d.moved) changed();
+  else draw();
+});
+
+// --- buttons and keys ---
+$("prev").addEventListener("click", () => load(idx - 1));
+$("skip").addEventListener("click", () => load(idx + 1));
+$("next").addEventListener("click", next);
+$("nextNew").addEventListener("click", nextUnreviewed);
+$("reject").addEventListener("click", reject);
+$("tighten").addEventListener("click", tighten);
+$("remove").addEventListener("click", remove);
+$("kinds").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setKind(b.dataset.k); });
+window.addEventListener("resize", () => { if (cur) { fit(); draw(); } });
+
+document.addEventListener("keydown", (e) => {
+  if (!cur || e.target.matches("input, textarea")) return;
+  const k = e.key;
+  if (k >= "1" && k <= String(kinds.length)) setKind(kinds[+k - 1]);
+  else if (k === "t") tighten();
+  else if (k === "Delete" || k === "Backspace") remove();
+  else if (k === "Tab") { if (cur.boxes.length) { cur.sel = (cur.sel + 1) % cur.boxes.length; render(); } }
+  else if (k === "ArrowRight" || k === "Enter") next();
+  else if (k === "ArrowLeft") load(idx - 1);
+  else if (k === "x") reject();
+  else return;
+  e.preventDefault();
+});
+
+window.addEventListener("beforeunload", (e) => { if (cur && cur.dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+api("/items").then((d) => {
+  ({ tag, kinds, ids, saved } = d);
+  if (!ids.length) { document.body.insertAdjacentHTML("beforeend", `<p style="padding:16px">No patterns tagged "${tag}".</p>`); return; }
+  const first = ids.findIndex((id) => saved[id] === undefined);
+  load(first >= 0 ? first : 0);
+});
+</script>
+</body>
+</html>
