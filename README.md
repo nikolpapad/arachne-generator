@@ -6,6 +6,9 @@ Generating new filet crochet patterns from the real Arachne Studio catalog.
 choose between composing real motifs (method B) and training a model (method C).
 Nothing is labelled automatically: the counts are your own ticks.
 
+New to this? Start with **[docs/motif-counting-guide.md](docs/motif-counting-guide.md)**:
+a step-by-step walkthrough with explanations of how and why it works.
+
 ## Setup (once)
 
 ```bash

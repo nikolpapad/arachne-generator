@@ -1,1 +1,1482 @@
-{}
+{
+ "001_page_10": [
+  "animal",
+  "human"
+ ],
+ "001_page_101": [
+  "animal"
+ ],
+ "001_page_103": [
+  "animal"
+ ],
+ "001_page_11": [
+  "human"
+ ],
+ "001_page_117": [
+  "human"
+ ],
+ "001_page_118": [
+  "human"
+ ],
+ "001_page_119": [
+  "animal",
+  "human"
+ ],
+ "001_page_12": [
+  "human",
+  "woman"
+ ],
+ "001_page_121": [
+  "human"
+ ],
+ "001_page_122": [
+  "human"
+ ],
+ "001_page_128": [
+  "putti"
+ ],
+ "001_page_13": [
+  "human"
+ ],
+ "001_page_135": [
+  "animal"
+ ],
+ "001_page_136": [
+  "animal"
+ ],
+ "001_page_139": [
+  "human",
+  "putti",
+  "woman"
+ ],
+ "001_page_14": [
+  "human"
+ ],
+ "001_page_140": [
+  "human",
+  "woman"
+ ],
+ "001_page_141": [
+  "human",
+  "putti"
+ ],
+ "001_page_142": [
+  "human",
+  "woman"
+ ],
+ "001_page_144": [
+  "human"
+ ],
+ "001_page_149": [
+  "human"
+ ],
+ "001_page_15": [
+  "human"
+ ],
+ "001_page_150": [
+  "animal",
+  "human"
+ ],
+ "001_page_151": [
+  "human",
+  "putti"
+ ],
+ "001_page_2": [
+  "human",
+  "putti"
+ ],
+ "001_page_27": [
+  "human",
+  "putti"
+ ],
+ "001_page_28": [
+  "human",
+  "putti"
+ ],
+ "001_page_31": [
+  "human",
+  "putti"
+ ],
+ "001_page_36": [
+  "animal",
+  "human"
+ ],
+ "001_page_38": [
+  "human"
+ ],
+ "001_page_41": [
+  "human"
+ ],
+ "001_page_42": [
+  "putti"
+ ],
+ "001_page_45": [
+  "animal"
+ ],
+ "001_page_46": [
+  "animal"
+ ],
+ "001_page_47": [
+  "animal"
+ ],
+ "001_page_49": [
+  "animal"
+ ],
+ "001_page_5": [
+  "animal",
+  "human"
+ ],
+ "001_page_50": [
+  "animal"
+ ],
+ "001_page_58": [
+  "putti"
+ ],
+ "001_page_6": [
+  "animal"
+ ],
+ "001_page_61": [
+  "animal"
+ ],
+ "001_page_63": [
+  "animal"
+ ],
+ "001_page_64": [
+  "animal"
+ ],
+ "001_page_66": [
+  "animal"
+ ],
+ "001_page_68": [
+  "animal"
+ ],
+ "001_page_71": [
+  "animal"
+ ],
+ "001_page_72": [
+  "animal"
+ ],
+ "001_page_86": [
+  "human"
+ ],
+ "001_page_87": [
+  "human"
+ ],
+ "001_page_9": [
+  "human"
+ ],
+ "001_page_92": [
+  "animal"
+ ],
+ "001_page_96": [
+  "human"
+ ],
+ "002_page_102": [
+  "animal"
+ ],
+ "002_page_103": [
+  "putti"
+ ],
+ "002_page_105": [
+  "human"
+ ],
+ "002_page_106": [
+  "human"
+ ],
+ "002_page_112": [
+  "human"
+ ],
+ "002_page_113": [
+  "human"
+ ],
+ "002_page_120": [
+  "human"
+ ],
+ "002_page_121": [
+  "human"
+ ],
+ "002_page_129": [
+  "putti"
+ ],
+ "002_page_131": [
+  "animal",
+  "putti"
+ ],
+ "002_page_135": [
+  "human",
+  "putti"
+ ],
+ "002_page_140": [
+  "human",
+  "putti"
+ ],
+ "002_page_142": [
+  "putti"
+ ],
+ "002_page_143": [
+  "putti"
+ ],
+ "002_page_146": [
+  "human",
+  "putti"
+ ],
+ "002_page_158": [
+  "human"
+ ],
+ "002_page_159": [
+  "putti"
+ ],
+ "002_page_160": [
+  "human"
+ ],
+ "002_page_161": [
+  "human"
+ ],
+ "002_page_162": [
+  "human"
+ ],
+ "002_page_163": [
+  "human"
+ ],
+ "002_page_165": [
+  "human"
+ ],
+ "002_page_166": [
+  "human"
+ ],
+ "002_page_17": [
+  "animal"
+ ],
+ "002_page_171": [
+  "putti"
+ ],
+ "002_page_18": [
+  "animal"
+ ],
+ "002_page_27": [
+  "human"
+ ],
+ "002_page_32": [
+  "human"
+ ],
+ "002_page_35": [
+  "human",
+  "putti"
+ ],
+ "002_page_4": [
+  "animal"
+ ],
+ "002_page_44": [
+  "human",
+  "putti"
+ ],
+ "002_page_45": [
+  "animal",
+  "human"
+ ],
+ "002_page_46": [
+  "animal"
+ ],
+ "002_page_48": [
+  "animal"
+ ],
+ "002_page_5": [
+  "putti"
+ ],
+ "002_page_6": [
+  "human"
+ ],
+ "002_page_68": [
+  "human"
+ ],
+ "002_page_7": [
+  "animal"
+ ],
+ "002_page_73": [
+  "human"
+ ],
+ "002_page_8": [
+  "human"
+ ],
+ "002_page_81": [
+  "human"
+ ],
+ "002_page_87": [
+  "human"
+ ],
+ "002_page_91": [
+  "human"
+ ],
+ "002_page_94": [
+  "putti"
+ ],
+ "002_page_99": [
+  "animal"
+ ],
+ "003_page_106": [
+  "human"
+ ],
+ "003_page_138": [
+  "animal"
+ ],
+ "003_page_145": [
+  "human",
+  "putti"
+ ],
+ "003_page_15": [
+  "animal"
+ ],
+ "003_page_152": [
+  "human"
+ ],
+ "003_page_157": [
+  "human",
+  "putti"
+ ],
+ "003_page_162": [
+  "human",
+  "putti"
+ ],
+ "003_page_170": [
+  "human"
+ ],
+ "003_page_171": [
+  "human"
+ ],
+ "003_page_178": [
+  "human"
+ ],
+ "003_page_179": [
+  "human"
+ ],
+ "003_page_180": [
+  "human",
+  "putti"
+ ],
+ "003_page_2": [
+  "human"
+ ],
+ "003_page_201": [
+  "human"
+ ],
+ "003_page_202": [
+  "human"
+ ],
+ "003_page_203": [
+  "human"
+ ],
+ "003_page_204": [
+  "human"
+ ],
+ "003_page_205": [
+  "human"
+ ],
+ "003_page_206": [
+  "human"
+ ],
+ "003_page_3": [
+  "human"
+ ],
+ "003_page_4": [
+  "human",
+  "putti"
+ ],
+ "003_page_43": [
+  "human"
+ ],
+ "003_page_5": [
+  "human",
+  "putti"
+ ],
+ "003_page_65": [
+  "human"
+ ],
+ "003_page_7": [
+  "human"
+ ],
+ "003_page_72": [
+  "human"
+ ],
+ "004_page_101": [
+  "human",
+  "putti"
+ ],
+ "004_page_103": [
+  "human"
+ ],
+ "004_page_104": [
+  "human",
+  "putti"
+ ],
+ "004_page_105": [
+  "animal"
+ ],
+ "004_page_107": [
+  "animal",
+  "human",
+  "putti"
+ ],
+ "004_page_113": [
+  "animal"
+ ],
+ "004_page_119": [
+  "animal"
+ ],
+ "004_page_121": [
+  "animal"
+ ],
+ "004_page_124": [
+  "human",
+  "putti"
+ ],
+ "004_page_125": [
+  "human"
+ ],
+ "004_page_132": [
+  "human",
+  "putti"
+ ],
+ "004_page_133": [
+  "animal",
+  "human",
+  "putti"
+ ],
+ "004_page_136": [
+  "human",
+  "putti"
+ ],
+ "004_page_137": [
+  "animal"
+ ],
+ "004_page_149": [
+  "animal"
+ ],
+ "004_page_150": [
+  "human"
+ ],
+ "004_page_151": [
+  "human"
+ ],
+ "004_page_153": [
+  "human"
+ ],
+ "004_page_161": [
+  "animal"
+ ],
+ "004_page_165": [
+  "putti"
+ ],
+ "004_page_166": [
+  "putti"
+ ],
+ "004_page_170": [
+  "animal"
+ ],
+ "004_page_190": [
+  "animal"
+ ],
+ "004_page_196": [
+  "human",
+  "putti"
+ ],
+ "004_page_198": [
+  "human",
+  "putti"
+ ],
+ "004_page_201": [
+  "human",
+  "putti"
+ ],
+ "004_page_205": [
+  "human",
+  "putti"
+ ],
+ "004_page_207": [
+  "human"
+ ],
+ "004_page_21": [
+  "human",
+  "putti"
+ ],
+ "004_page_211": [
+  "human"
+ ],
+ "004_page_212": [
+  "human"
+ ],
+ "004_page_22": [
+  "human",
+  "putti"
+ ],
+ "004_page_23": [
+  "human",
+  "putti"
+ ],
+ "004_page_24": [
+  "human",
+  "putti"
+ ],
+ "004_page_3": [
+  "human",
+  "putti"
+ ],
+ "004_page_35": [
+  "human",
+  "putti"
+ ],
+ "004_page_39": [
+  "human",
+  "putti"
+ ],
+ "004_page_4": [
+  "animal"
+ ],
+ "004_page_45": [
+  "animal"
+ ],
+ "004_page_48": [
+  "animal"
+ ],
+ "004_page_53": [
+  "human",
+  "putti"
+ ],
+ "004_page_56": [
+  "human",
+  "woman"
+ ],
+ "004_page_6": [
+  "human"
+ ],
+ "004_page_67": [
+  "human",
+  "putti"
+ ],
+ "004_page_69": [
+  "animal"
+ ],
+ "004_page_70": [
+  "animal"
+ ],
+ "004_page_8": [
+  "human"
+ ],
+ "004_page_83": [
+  "human",
+  "putti"
+ ],
+ "004_page_84": [
+  "putti"
+ ],
+ "004_page_85": [
+  "human",
+  "putti"
+ ],
+ "004_page_86": [
+  "putti"
+ ],
+ "004_page_87": [
+  "human"
+ ],
+ "004_page_9": [
+  "human"
+ ],
+ "004_page_93": [
+  "human"
+ ],
+ "005_page_105": [
+  "animal"
+ ],
+ "005_page_108": [
+  "animal"
+ ],
+ "005_page_124": [
+  "human",
+  "putti"
+ ],
+ "005_page_13": [
+  "human",
+  "putti"
+ ],
+ "005_page_130": [
+  "human",
+  "putti"
+ ],
+ "005_page_131": [
+  "human",
+  "putti"
+ ],
+ "005_page_150": [
+  "human"
+ ],
+ "005_page_153": [
+  "animal"
+ ],
+ "005_page_154": [
+  "animal"
+ ],
+ "005_page_16": [
+  "human",
+  "putti",
+  "woman"
+ ],
+ "005_page_168": [
+  "human",
+  "putti"
+ ],
+ "005_page_169": [
+  "human",
+  "putti"
+ ],
+ "005_page_179": [
+  "animal"
+ ],
+ "005_page_183": [
+  "animal"
+ ],
+ "005_page_187": [
+  "putti"
+ ],
+ "005_page_19": [
+  "human",
+  "putti"
+ ],
+ "005_page_191": [
+  "human"
+ ],
+ "005_page_192": [
+  "human"
+ ],
+ "005_page_194": [
+  "human",
+  "putti"
+ ],
+ "005_page_196": [
+  "putti"
+ ],
+ "005_page_198": [
+  "human"
+ ],
+ "005_page_199": [
+  "putti"
+ ],
+ "005_page_200": [
+  "human",
+  "putti"
+ ],
+ "005_page_44": [
+  "animal"
+ ],
+ "005_page_62": [
+  "animal"
+ ],
+ "005_page_65": [
+  "human",
+  "putti"
+ ],
+ "005_page_69": [
+  "human",
+  "putti"
+ ],
+ "005_page_70": [
+  "human",
+  "putti"
+ ],
+ "006_page_10": [
+  "human",
+  "putti"
+ ],
+ "006_page_102": [
+  "putti"
+ ],
+ "006_page_103": [
+  "human"
+ ],
+ "006_page_109": [
+  "human"
+ ],
+ "006_page_127": [
+  "animal"
+ ],
+ "006_page_128": [
+  "animal"
+ ],
+ "006_page_130": [
+  "animal"
+ ],
+ "006_page_131": [
+  "animal"
+ ],
+ "006_page_139": [
+  "human",
+  "putti"
+ ],
+ "006_page_142": [
+  "human",
+  "woman"
+ ],
+ "006_page_143": [
+  "human",
+  "woman"
+ ],
+ "006_page_144": [
+  "human",
+  "putti"
+ ],
+ "006_page_145": [
+  "animal",
+  "putti"
+ ],
+ "006_page_15": [
+  "human"
+ ],
+ "006_page_16": [
+  "human",
+  "putti"
+ ],
+ "006_page_164": [
+  "human",
+  "putti"
+ ],
+ "006_page_165": [
+  "human"
+ ],
+ "006_page_166": [
+  "human"
+ ],
+ "006_page_167": [
+  "human",
+  "putti"
+ ],
+ "006_page_168": [
+  "human"
+ ],
+ "006_page_169": [
+  "human"
+ ],
+ "006_page_17": [
+  "human",
+  "putti"
+ ],
+ "006_page_170": [
+  "human"
+ ],
+ "006_page_173": [
+  "human"
+ ],
+ "006_page_179": [
+  "human"
+ ],
+ "006_page_18": [
+  "human",
+  "putti"
+ ],
+ "006_page_182": [
+  "putti"
+ ],
+ "006_page_184": [
+  "human"
+ ],
+ "006_page_19": [
+  "human",
+  "putti"
+ ],
+ "006_page_31": [
+  "human"
+ ],
+ "006_page_50": [
+  "animal"
+ ],
+ "006_page_51": [
+  "human",
+  "putti"
+ ],
+ "006_page_58": [
+  "animal"
+ ],
+ "006_page_59": [
+  "animal"
+ ],
+ "006_page_60": [
+  "animal"
+ ],
+ "006_page_61": [
+  "human",
+  "putti"
+ ],
+ "006_page_62": [
+  "animal"
+ ],
+ "006_page_63": [
+  "animal"
+ ],
+ "006_page_67": [
+  "animal",
+  "human",
+  "putti"
+ ],
+ "006_page_75": [
+  "animal"
+ ],
+ "006_page_77": [
+  "animal"
+ ],
+ "006_page_8": [
+  "putti"
+ ],
+ "006_page_86": [
+  "human"
+ ],
+ "006_page_9": [
+  "animal"
+ ],
+ "006_page_95": [
+  "putti"
+ ],
+ "006_page_96": [
+  "human",
+  "putti"
+ ],
+ "006_page_97": [
+  "putti"
+ ],
+ "006_page_98": [
+  "animal"
+ ],
+ "007_page_104": [
+  "human"
+ ],
+ "007_page_113": [
+  "human"
+ ],
+ "007_page_121": [
+  "human",
+  "putti"
+ ],
+ "007_page_132": [
+  "human",
+  "putti"
+ ],
+ "007_page_133": [
+  "animal"
+ ],
+ "007_page_139": [
+  "human",
+  "putti"
+ ],
+ "007_page_140": [
+  "human"
+ ],
+ "007_page_141": [
+  "human"
+ ],
+ "007_page_160": [
+  "animal"
+ ],
+ "007_page_161": [
+  "animal",
+  "human"
+ ],
+ "007_page_17": [
+  "human"
+ ],
+ "007_page_18": [
+  "human"
+ ],
+ "007_page_183": [
+  "human",
+  "putti"
+ ],
+ "007_page_184": [
+  "human",
+  "putti"
+ ],
+ "007_page_185": [
+  "human"
+ ],
+ "007_page_198": [
+  "human"
+ ],
+ "007_page_199": [
+  "human"
+ ],
+ "007_page_2": [
+  "human"
+ ],
+ "007_page_20": [
+  "human"
+ ],
+ "007_page_201": [
+  "human",
+  "putti"
+ ],
+ "007_page_202": [
+  "human"
+ ],
+ "007_page_206": [
+  "putti"
+ ],
+ "007_page_208": [
+  "human"
+ ],
+ "007_page_21": [
+  "human"
+ ],
+ "007_page_216": [
+  "human",
+  "putti"
+ ],
+ "007_page_218": [
+  "human"
+ ],
+ "007_page_247": [
+  "putti"
+ ],
+ "007_page_33": [
+  "putti"
+ ],
+ "007_page_39": [
+  "human"
+ ],
+ "007_page_43": [
+  "putti"
+ ],
+ "007_page_5": [
+  "putti"
+ ],
+ "007_page_6": [
+  "animal"
+ ],
+ "007_page_70": [
+  "human"
+ ],
+ "007_page_71": [
+  "human",
+  "woman"
+ ],
+ "007_page_80": [
+  "human"
+ ],
+ "007_page_81": [
+  "human"
+ ],
+ "008_page_103": [
+  "human"
+ ],
+ "008_page_104": [
+  "human"
+ ],
+ "008_page_110": [
+  "human"
+ ],
+ "008_page_111": [
+  "human"
+ ],
+ "008_page_113": [
+  "animal"
+ ],
+ "008_page_119": [
+  "human",
+  "putti"
+ ],
+ "008_page_122": [
+  "human"
+ ],
+ "008_page_123": [
+  "animal",
+  "human",
+  "putti"
+ ],
+ "008_page_124": [
+  "human",
+  "putti"
+ ],
+ "008_page_126": [
+  "human"
+ ],
+ "008_page_128": [
+  "putti"
+ ],
+ "008_page_129": [
+  "putti"
+ ],
+ "008_page_133": [
+  "human"
+ ],
+ "008_page_137": [
+  "human"
+ ],
+ "008_page_138": [
+  "putti"
+ ],
+ "008_page_140": [
+  "putti"
+ ],
+ "008_page_142": [
+  "putti"
+ ],
+ "008_page_148": [
+  "animal"
+ ],
+ "008_page_149": [
+  "human",
+  "putti"
+ ],
+ "008_page_153": [
+  "human",
+  "putti"
+ ],
+ "008_page_158": [
+  "animal"
+ ],
+ "008_page_159": [
+  "putti"
+ ],
+ "008_page_16": [
+  "putti"
+ ],
+ "008_page_160": [
+  "putti"
+ ],
+ "008_page_161": [
+  "putti"
+ ],
+ "008_page_170": [
+  "human"
+ ],
+ "008_page_177": [
+  "human",
+  "putti",
+  "woman"
+ ],
+ "008_page_178": [
+  "human",
+  "woman"
+ ],
+ "008_page_179": [
+  "human",
+  "woman"
+ ],
+ "008_page_2": [
+  "human"
+ ],
+ "008_page_20": [
+  "human",
+  "putti"
+ ],
+ "008_page_21": [
+  "putti"
+ ],
+ "008_page_25": [
+  "putti"
+ ],
+ "008_page_34": [
+  "human"
+ ],
+ "008_page_35": [
+  "human"
+ ],
+ "008_page_52": [
+  "human"
+ ],
+ "008_page_53": [
+  "human"
+ ],
+ "008_page_62": [
+  "animal"
+ ],
+ "008_page_63": [
+  "animal"
+ ],
+ "008_page_65": [
+  "animal"
+ ],
+ "008_page_66": [
+  "animal"
+ ],
+ "008_page_67": [
+  "human"
+ ],
+ "008_page_68": [
+  "human",
+  "putti"
+ ],
+ "008_page_70": [
+  "human",
+  "putti"
+ ],
+ "008_page_71": [
+  "animal"
+ ],
+ "008_page_72": [
+  "animal"
+ ],
+ "008_page_75": [
+  "human",
+  "woman"
+ ],
+ "008_page_76": [
+  "human",
+  "putti"
+ ],
+ "008_page_77": [
+  "human",
+  "woman"
+ ],
+ "008_page_78": [
+  "putti"
+ ],
+ "008_page_79": [
+  "animal"
+ ],
+ "008_page_80": [
+  "human",
+  "putti"
+ ],
+ "008_page_81": [
+  "human",
+  "putti"
+ ],
+ "008_page_87": [
+  "human"
+ ],
+ "008_page_88": [
+  "human",
+  "putti"
+ ],
+ "008_page_90": [
+  "human",
+  "putti"
+ ],
+ "008_page_91": [
+  "human"
+ ],
+ "010_page_10": [
+  "putti"
+ ],
+ "010_page_11": [
+  "human",
+  "putti"
+ ],
+ "010_page_111": [
+  "human"
+ ],
+ "010_page_113": [
+  "human",
+  "putti"
+ ],
+ "010_page_114": [
+  "human",
+  "putti"
+ ],
+ "010_page_117": [
+  "human"
+ ],
+ "010_page_12": [
+  "human",
+  "putti"
+ ],
+ "010_page_123": [
+  "animal"
+ ],
+ "010_page_129": [
+  "animal"
+ ],
+ "010_page_13": [
+  "human",
+  "putti"
+ ],
+ "010_page_134": [
+  "human",
+  "putti"
+ ],
+ "010_page_139": [
+  "human",
+  "putti"
+ ],
+ "010_page_14": [
+  "human"
+ ],
+ "010_page_144": [
+  "human",
+  "putti"
+ ],
+ "010_page_149": [
+  "human",
+  "putti"
+ ],
+ "010_page_15": [
+  "animal"
+ ],
+ "010_page_154": [
+  "human",
+  "putti"
+ ],
+ "010_page_157": [
+  "putti"
+ ],
+ "010_page_158": [
+  "human",
+  "putti"
+ ],
+ "010_page_167": [
+  "human"
+ ],
+ "010_page_168": [
+  "human"
+ ],
+ "010_page_169": [
+  "human"
+ ],
+ "010_page_171": [
+  "animal"
+ ],
+ "010_page_172": [
+  "animal"
+ ],
+ "010_page_176": [
+  "animal"
+ ],
+ "010_page_18": [
+  "animal"
+ ],
+ "010_page_185": [
+  "human",
+  "putti"
+ ],
+ "010_page_186": [
+  "human",
+  "putti"
+ ],
+ "010_page_187": [
+  "human",
+  "putti"
+ ],
+ "010_page_188": [
+  "human",
+  "putti"
+ ],
+ "010_page_189": [
+  "putti"
+ ],
+ "010_page_196": [
+  "human",
+  "putti"
+ ],
+ "010_page_198": [
+  "putti"
+ ],
+ "010_page_20": [
+  "human"
+ ],
+ "010_page_200": [
+  "animal"
+ ],
+ "010_page_21": [
+  "human",
+  "putti"
+ ],
+ "010_page_231": [
+  "putti"
+ ],
+ "010_page_33": [
+  "human",
+  "putti"
+ ],
+ "010_page_55": [
+  "human",
+  "woman"
+ ],
+ "010_page_71": [
+  "animal"
+ ],
+ "010_page_79": [
+  "animal"
+ ],
+ "010_page_93": [
+  "putti"
+ ],
+ "010_page_94": [
+  "putti"
+ ],
+ "011_page_109": [
+  "human",
+  "putti"
+ ],
+ "011_page_140": [
+  "human"
+ ],
+ "011_page_145": [
+  "human"
+ ],
+ "011_page_159": [
+  "human",
+  "putti"
+ ],
+ "011_page_16": [
+  "putti"
+ ],
+ "011_page_160": [
+  "human",
+  "putti"
+ ],
+ "011_page_17": [
+  "human"
+ ],
+ "011_page_172": [
+  "putti"
+ ],
+ "011_page_173": [
+  "human",
+  "putti"
+ ],
+ "011_page_191": [
+  "human",
+  "putti"
+ ],
+ "011_page_192": [
+  "putti"
+ ],
+ "011_page_2": [
+  "animal"
+ ],
+ "011_page_219": [
+  "human",
+  "putti"
+ ],
+ "011_page_228": [
+  "human",
+  "putti"
+ ],
+ "011_page_235": [
+  "human"
+ ],
+ "011_page_236": [
+  "human",
+  "putti"
+ ],
+ "011_page_238": [
+  "human"
+ ],
+ "011_page_239": [
+  "human",
+  "putti"
+ ],
+ "011_page_24": [
+  "human",
+  "putti"
+ ],
+ "011_page_241": [
+  "human",
+  "putti"
+ ],
+ "011_page_245": [
+  "human",
+  "putti"
+ ],
+ "011_page_247": [
+  "putti"
+ ],
+ "011_page_249": [
+  "human",
+  "putti"
+ ],
+ "011_page_251": [
+  "human",
+  "putti"
+ ],
+ "011_page_252": [
+  "human"
+ ],
+ "011_page_271": [
+  "animal"
+ ],
+ "011_page_272": [
+  "human",
+  "putti"
+ ],
+ "011_page_286": [
+  "human"
+ ],
+ "011_page_39": [
+  "animal"
+ ],
+ "011_page_70": [
+  "putti"
+ ],
+ "011_page_76": [
+  "putti"
+ ],
+ "011_page_78": [
+  "human",
+  "putti"
+ ],
+ "011_page_83": [
+  "human",
+  "putti"
+ ],
+ "012_page_123": [
+  "putti"
+ ],
+ "012_page_127": [
+  "putti"
+ ],
+ "012_page_148": [
+  "putti"
+ ],
+ "012_page_162": [
+  "human",
+  "putti"
+ ],
+ "012_page_168": [
+  "human"
+ ],
+ "012_page_200": [
+  "putti"
+ ],
+ "012_page_220": [
+  "animal"
+ ],
+ "012_page_221": [
+  "human",
+  "putti"
+ ],
+ "012_page_23": [
+  "human",
+  "putti"
+ ],
+ "012_page_255": [
+  "human"
+ ],
+ "012_page_257": [
+  "woman"
+ ],
+ "012_page_26": [
+  "animal"
+ ],
+ "012_page_272": [
+  "animal"
+ ],
+ "012_page_274": [
+  "human",
+  "putti"
+ ],
+ "012_page_40": [
+  "human"
+ ],
+ "012_page_44": [
+  "human"
+ ],
+ "012_page_57": [
+  "human"
+ ],
+ "012_page_65": [
+  "putti"
+ ],
+ "012_page_66": [
+  "putti"
+ ],
+ "012_page_78": [
+  "putti"
+ ]
+}
