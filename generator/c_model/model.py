@@ -73,6 +73,55 @@ class PatchDiscriminator(nn.Module):
         return self.layers(torch.cat([x, motif], dim=1))
 
 
+class Generator(nn.Module):
+    """Unconditional generator: random noise in, one figure's motif cells out.
+
+    The reverse of the U-Net's left side: noise becomes an 8x8 picture with many
+    channels, then each step doubles its size (8 → 16 → 32 → 64 → 128) and halves the
+    channels. Different noise gives a different figure.
+    Output (batch, 1, 128, 128): one score per cell, like the U-Net's.
+    """
+
+    def __init__(self, z_dim=128, width=32):
+        super().__init__()
+        widths = [width * 2 ** i for i in reversed(range(5))]  # 512, 256, 128, 64, 32
+        self.start = nn.Linear(z_dim, widths[0] * 8 * 8)
+        self.start_norm = nn.Sequential(nn.BatchNorm2d(widths[0]), nn.ReLU(inplace=True))
+        self.up = nn.ModuleList([Block(widths[i], widths[i + 1]) for i in range(4)])
+        self.out = nn.Conv2d(widths[-1], 1, 1)
+
+    def forward(self, z):
+        x = self.start_norm(self.start(z).view(len(z), -1, 8, 8))
+        for block in self.up:
+            x = block(nn.functional.interpolate(x, scale_factor=2, mode="nearest"))  # double the size
+        return self.out(x)
+
+
+class Critic(nn.Module):
+    """Judges a motif on its own (no stroke): real figure or generated?
+
+    Two answers from one network: a 16x16 grid of patch scores halfway down (are the
+    stitches and white lines right up close?) and one score at the bottom (is the whole
+    thing a believable human?). Spectral norm keeps it from overpowering the generator.
+    """
+
+    def __init__(self, width=64):
+        super().__init__()
+        sn = nn.utils.spectral_norm
+
+        def down(c_in, c_out):
+            return [sn(nn.Conv2d(c_in, c_out, 4, stride=2, padding=1)), nn.LeakyReLU(0.2, inplace=True)]
+
+        self.local = nn.Sequential(*down(1, width), *down(width, width * 2), *down(width * 2, width * 4))  # → 16
+        self.patch = sn(nn.Conv2d(width * 4, 1, 3, padding=1))
+        self.whole = nn.Sequential(*down(width * 4, width * 8), *down(width * 8, width * 8),  # → 4
+                                   nn.Flatten(), sn(nn.Linear(width * 8 * 4 * 4, 1)))
+
+    def forward(self, motif):
+        x = self.local(motif)
+        return self.patch(x), self.whole(x)
+
+
 if __name__ == "__main__":
     net = UNet()
     print(f"{sum(p.numel() for p in net.parameters()) / 1e6:.1f}M parameters")
@@ -80,3 +129,7 @@ if __name__ == "__main__":
     critic = PatchDiscriminator()
     print(f"{sum(p.numel() for p in critic.parameters()) / 1e6:.1f}M parameters")
     print(critic(torch.zeros(1, 2, 128, 128), torch.zeros(1, 1, 128, 128)).shape)
+    gen, free_critic = Generator(), Critic()
+    print(f"{sum(p.numel() for p in gen.parameters()) / 1e6:.1f}M, "
+          f"{sum(p.numel() for p in free_critic.parameters()) / 1e6:.1f}M parameters")
+    print(gen(torch.zeros(2, 128)).shape, [s.shape for s in free_critic(torch.zeros(2, 1, 128, 128))])
