@@ -27,7 +27,7 @@ import torch
 from torch import nn
 
 from model import PatchDiscriminator, UNet
-from train import Figures, sample_sheet
+from train import Figures, progress, sample_sheet
 
 HERE = Path(__file__).resolve().parent
 
@@ -104,9 +104,11 @@ def main():
             losses.append([d_loss.item(), g_adv.item(), g_l1.item()])
         for s in scheds:
             s.step()
+        progress(epoch, epochs, start)
 
         if epoch % args.every and epoch != epochs:
             continue
+        print()
         gen.eval()
         with torch.no_grad():
             logits = torch.cat([gen(x_test[i:i + args.batch]) for i in range(0, len(x_test), args.batch)])

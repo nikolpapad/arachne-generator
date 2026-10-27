@@ -66,6 +66,15 @@ class Figures(torch.utils.data.Dataset):
         return torch.from_numpy(inputs(points)), torch.from_numpy(motif[None].astype(np.float32))
 
 
+def progress(epoch, epochs, start, width=30):
+    """Redraw one line in place: bar, epoch count, elapsed and estimated time left."""
+    elapsed = time.time() - start
+    left = elapsed / epoch * (epochs - epoch)
+    filled = round(width * epoch / epochs)
+    print(f"\r[{'#' * filled}{'.' * (width - filled)}] epoch {epoch}/{epochs}  "
+          f"{elapsed / 60:.0f} min done, ~{left / 60:.0f} min left ", end="", flush=True)
+
+
 def dice_loss(logits, target):
     p = torch.sigmoid(logits)
     overlap = (p * target).sum((1, 2, 3))
@@ -139,9 +148,11 @@ def main():
             opt.step()
             losses.append(loss.item())
         sched.step()
+        progress(epoch, epochs, start)
 
         if epoch % args.every and epoch != epochs:
             continue
+        print()
         net.eval()
         with torch.no_grad():
             logits = torch.cat([net(x_test[i:i + args.batch]) for i in range(0, len(x_test), args.batch)])
