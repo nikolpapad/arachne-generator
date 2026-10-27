@@ -1,5 +1,7 @@
 # Handoff: method C (trained neural network)
 
+> **Superseded:** the current plan is [generation-plan.md](generation-plan.md). Keep this file for the data facts (section 3) and the pitfalls (section 9).
+
 **Status (2026-10-25): not started. Planning notes only.**
 No model code exists yet, and no motif has been counted yet, so whether C is
 viable is still **unknown**. Read section 2 before writing any code.

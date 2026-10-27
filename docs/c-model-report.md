@@ -1,5 +1,7 @@
 # Method C, first model: what we built and why
 
+> **The current plan is [generation-plan.md](generation-plan.md).** This report records the first model (the U-Net) and the reasons behind it.
+
 Status on 2026-10-25: the data is prepared and the training code works (tested on CPU).
 The first real training run is next, on the GTX 960M laptop.
 

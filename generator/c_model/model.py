@@ -50,7 +50,33 @@ class UNet(nn.Module):
         return self.out(x)
 
 
+class PatchDiscriminator(nn.Module):
+    """The pix2pix critic: (path, head dot, motif) in, a 14x14 grid of real-or-fake scores out.
+
+    Each score judges one ~70-cell patch, so it learns what stitched figures look like up
+    close (crisp edges, white line work) rather than the figure as a whole. Spectral norm
+    keeps it from overpowering the generator, which matters with only a few hundred figures.
+    """
+
+    def __init__(self, c_in=3, width=64):
+        super().__init__()
+        sn = nn.utils.spectral_norm
+        layers, c = [], c_in
+        for w in [width, width * 2, width * 4]:  # 128 → 64 → 32 → 16
+            layers += [sn(nn.Conv2d(c, w, 4, stride=2, padding=1)), nn.LeakyReLU(0.2, inplace=True)]
+            c = w
+        layers += [sn(nn.Conv2d(c, width * 8, 4, padding=1)), nn.LeakyReLU(0.2, inplace=True),  # 16 → 15
+                   sn(nn.Conv2d(width * 8, 1, 4, padding=1))]  # 15 → 14
+        self.layers = nn.Sequential(*layers)
+
+    def forward(self, x, motif):
+        return self.layers(torch.cat([x, motif], dim=1))
+
+
 if __name__ == "__main__":
     net = UNet()
     print(f"{sum(p.numel() for p in net.parameters()) / 1e6:.1f}M parameters")
     print(net(torch.zeros(1, 2, 128, 128)).shape)
+    critic = PatchDiscriminator()
+    print(f"{sum(p.numel() for p in critic.parameters()) / 1e6:.1f}M parameters")
+    print(critic(torch.zeros(1, 2, 128, 128), torch.zeros(1, 1, 128, 128)).shape)
