@@ -43,6 +43,18 @@ so a small figure in a large scene can still be found.
 
 Run it again only if the catalog changes.
 
+## Map of the catalog (optional, about 1 minute)
+
+```bash
+.venv/bin/python catalog/map.py
+```
+
+Writes `catalog/map.html`, a single file to open in a browser. Every pattern is
+placed on a 2D map by its CLIP embedding (UMAP), so look-alikes sit together.
+Hover to see a pattern, click it to see its 12 nearest neighbours, and highlight
+a tag, book or cluster. Below the map: 16 clusters with example pictures and a
+table of which books feed which cluster.
+
 ## 2. Search and tick
 
 ```bash

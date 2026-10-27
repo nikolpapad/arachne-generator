@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalog Map</title>
+<style>
+:root {
+  color-scheme: light;
+  --surface-0: #f4f3f0;
+  --surface-1: #fcfcfb;
+  --border: #e2e0da;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #85837d;
+  --accent: #2a78d6;
+  --dot: #b9b7b0;
+  --seq-0: #f0efec; --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec;
+  --seq-4: #3987e5; --seq-5: #256abf; --seq-6: #184f95; --seq-7: #0d366b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border: #2f2f2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8c8b84;
+    --accent: #3987e5;
+    --dot: #5a5955;
+    --seq-0: #262624; --seq-1: #104281; --seq-2: #184f95; --seq-3: #1c5cab;
+    --seq-4: #256abf; --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #b7d3f6;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #121211;
+  --surface-1: #1a1a19;
+  --border: #2f2f2c;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8c8b84;
+  --accent: #3987e5;
+  --dot: #5a5955;
+  --seq-0: #262624; --seq-1: #104281; --seq-2: #184f95; --seq-3: #1c5cab;
+  --seq-4: #256abf; --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #b7d3f6;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 1400px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 40px 0 4px; }
+.lede { color: var(--text-secondary); max-width: 760px; margin: 0 0 20px; }
+.note { color: var(--text-muted); font-size: 13px; margin: 0 0 12px; max-width: 760px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 24px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+.tile b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.tile span { color: var(--text-secondary); font-size: 12px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 8px; }
+.toolbar label { color: var(--text-secondary); font-size: 13px; display: flex; gap: 6px; align-items: center; }
+select, input, button {
+  font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+}
+button { cursor: pointer; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; }
+.seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); }
+.count { color: var(--text-muted); font-size: 13px; }
+.stage { display: grid; grid-template-columns: 1fr 320px; gap: 12px; }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+.mapwrap { position: relative; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 72vh; min-height: 420px; }
+canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+canvas.dragging { cursor: grabbing; }
+.hint { position: absolute; left: 10px; bottom: 8px; color: var(--text-muted); font-size: 12px; pointer-events: none; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.15); font-size: 12px; display: none; max-width: 240px;
+}
+.tip img { display: block; width: 160px; height: 160px; object-fit: contain; background: #f5f5f5; border-radius: 4px; margin-bottom: 6px; image-rendering: pixelated; }
+.tip b { font-size: 13px; }
+.tip .muted, .muted { color: var(--text-secondary); }
+.panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 14px; height: 72vh; min-height: 420px; overflow: auto; }
+.panel h3 { font-size: 15px; margin: 0 0 2px; }
+.panel .big { width: 100%; aspect-ratio: 1; object-fit: contain; background: #f5f5f5; border-radius: 6px; margin: 8px 0; image-rendering: pixelated; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.chip { font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; color: var(--text-secondary); }
+.nn { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.nn figure, .reps figure { margin: 0; cursor: pointer; }
+.nn img, .reps img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #f5f5f5; border-radius: 4px; display: block; border: 2px solid transparent; }
+.nn figure:hover img, .reps figure:hover img { border-color: var(--accent); }
+.nn figcaption, .reps figcaption { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; text-align: center; }
+.clusters { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.card header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card h3 { font-size: 14px; margin: 0; }
+.card .n { color: var(--text-secondary); font-variant-numeric: tabular-nums; font-size: 13px; white-space: nowrap; }
+.reps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 8px 0; }
+.card button { font-size: 12px; }
+.heat { overflow-x: auto; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+table.hm { border-collapse: separate; border-spacing: 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.hm th { font-weight: 500; color: var(--text-secondary); padding: 2px 6px; white-space: nowrap; }
+.hm th.row { text-align: right; }
+.hm td { width: 44px; height: 26px; text-align: center; border-radius: 4px; color: var(--text-primary); }
+.hm td.dark { color: #fff; }
+.hm td.total { background: transparent; color: var(--text-secondary); }
+.legend { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+.legend i { width: 22px; height: 12px; border-radius: 2px; display: inline-block; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Catalog map</h1>
+  <p class="lede">Every pattern is placed by what CLIP "sees" in it: patterns the model finds alike sit close together.
+    Distance on the map is only roughly meaningful (UMAP keeps neighbourhoods, not exact distances).
+    Click a pattern to see its true nearest neighbours in the full 512-number embedding.</p>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="toolbar">
+    <span class="seg" role="group" aria-label="Draw as">
+      <button id="modePics" aria-pressed="true">Pictures</button>
+      <button id="modeDots" aria-pressed="false">Dots</button>
+    </span>
+    <label>Highlight <select id="hl"></select></label>
+    <label>Find <input id="find" placeholder="e.g. 003_page_12" size="14" list="ids"></label>
+    <datalist id="ids"></datalist>
+    <label><input type="checkbox" id="labels" checked> Cluster names</label>
+    <button id="reset">Reset view</button>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="stage">
+    <div class="mapwrap" id="wrap">
+      <canvas id="map"></canvas>
+      <div class="tip" id="tip"></div>
+      <div class="hint">scroll to zoom · drag to pan · click a pattern</div>
+    </div>
+    <aside class="panel" id="panel"><p class="muted">Click a pattern on the map to see it large, with the 12 patterns CLIP considers most similar.</p></aside>
+  </div>
+
+  <h2>Clusters</h2>
+  <p class="note">K-means groups of patterns with similar embeddings. Names are CLIP's best two guesses from a fixed word list, so treat them as hints.
+    The pictures are the members closest to each group's centre.</p>
+  <div class="clusters" id="clusters"></div>
+
+  <h2>Which books feed which clusters</h2>
+  <p class="note">Number of patterns from each book (columns) in each cluster (rows). A cluster fed by one book is often that book's style, not a subject.</p>
+  <div class="heat"><table class="hm" id="heat"></table>
+    <div class="legend" id="heatLegend"></div></div>
+</main>
+
+<script>
+const DATA = /*DATA*/null;
+const items = DATA.items, clusters = DATA.clusters;
+const books = [...new Set(items.map(d => d.book))].sort();
+const tagNames = [...new Set(items.flatMap(d => d.tags))].sort();
+const clusterName = c => clusters[c].names.join(" / ");
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// Pictures, decoded once.
+for (const d of items) { d.im = new Image(); d.im.src = d.img; d.ar = d.size[1] / d.size[0]; }
+
+// ---- tiles
+const tagged = items.filter(d => d.tags.length).length;
+document.getElementById("tiles").innerHTML = [
+  [items.length.toLocaleString(), "patterns on the map"],
+  [books.length, "books"],
+  [DATA.views.toLocaleString(), "embedded views (whole + crops)"],
+  [clusters.length, "clusters"],
+  [tagged, "patterns you've tagged"],
+  [DATA.duplicates + DATA.skipped, `left out (${DATA.duplicates} duplicates, ${DATA.skipped} too small)`],
+].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join("");
+
+// ---- highlight options
+const hl = document.getElementById("hl");
+hl.innerHTML = `<option value="">Nothing</option>`
+  + `<optgroup label="Your tags">${tagNames.map(t => `<option value="tag:${t}">${t} (${items.filter(d => d.tags.includes(t)).length})</option>`).join("")}
+       <option value="tag:">any tag (${tagged})</option></optgroup>`
+  + `<optgroup label="Book">${books.map(b => `<option value="book:${b}">book ${b} (${items.filter(d => d.book === b).length})</option>`).join("")}</optgroup>`
+  + `<optgroup label="Cluster">${clusters.map((c, i) => `<option value="c:${i}">${i + 1}. ${clusterName(i)} (${c.n})</option>`).join("")}</optgroup>`;
+document.getElementById("ids").innerHTML = items.map(d => `<option value="${d.id}">`).join("");
+
+function matches(d, f) {
+  if (!f) return true;
+  const [k, v] = f.split(":");
+  if (k === "tag") return v ? d.tags.includes(v) : d.tags.length > 0;
+  if (k === "book") return d.book === v;
+  return d.c === +v;
+}
+
+// ---- map
+const canvas = document.getElementById("map"), ctx = canvas.getContext("2d");
+const wrap = document.getElementById("wrap"), tip = document.getElementById("tip");
+let W = 0, H = 0, dpr = 1, view = { k: 1, tx: 0, ty: 0 }, mode = "pics", filter = "", selected = -1, hover = -1;
+const xs = items.map(d => d.x), ys = items.map(d => d.y);
+const ext = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+const centroids = clusters.map((_, c) => {
+  const m = items.filter(d => d.c === c);
+  const med = a => a.sort((p, q) => p - q)[a.length >> 1];
+  return { x: med(m.map(d => d.x)), y: med(m.map(d => d.y)) };
+});
+
+function base() { // data -> screen at k = 1
+  const pad = 40, s = Math.min((W - 2 * pad) / (ext.x1 - ext.x0), (H - 2 * pad) / (ext.y1 - ext.y0));
+  return { s, ox: (W - s * (ext.x1 - ext.x0)) / 2 - s * ext.x0, oy: (H - s * (ext.y1 - ext.y0)) / 2 - s * ext.y0 };
+}
+function toScreen(x, y) { const b = base(); return [(b.ox + b.s * x) * view.k + view.tx, (b.oy + b.s * y) * view.k + view.ty]; }
+function picSize() { return Math.max(9, Math.min(140, 13 * Math.pow(view.k, 0.75))); }
+
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  draw();
+}
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const accent = css("--accent"), dot = css("--dot"), surface = css("--surface-1");
+  const on = items.map(d => matches(d, filter));
+  const order = items.map((_, i) => i).sort((a, b) => on[a] - on[b]); // highlighted on top
+  const S = picSize();
+  for (const i of order) {
+    const d = items[i], [sx, sy] = toScreen(d.x, d.y);
+    if (sx < -S || sy < -S || sx > W + S || sy > H + S) continue;
+    ctx.globalAlpha = on[i] ? 1 : 0.12;
+    if (mode === "pics") {
+      const w = d.ar >= 1 ? S : S * d.ar, h = d.ar >= 1 ? S / d.ar : S;
+      ctx.drawImage(d.im, sx - w / 2, sy - h / 2, w, h);
+      if (filter && on[i]) { ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.strokeRect(sx - w / 2 - 1, sy - h / 2 - 1, w + 2, h + 2); }
+    } else {
+      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 7);
+      ctx.fillStyle = filter && on[i] ? accent : (filter ? dot : accent);
+      ctx.fill(); ctx.strokeStyle = surface; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  for (const i of [selected, hover]) {
+    if (i < 0) continue;
+    const [sx, sy] = toScreen(items[i].x, items[i].y), r = mode === "pics" ? S / 2 + 4 : 8;
+    ctx.strokeStyle = accent; ctx.lineWidth = i === selected ? 3 : 2;
+    ctx.strokeRect(sx - r, sy - r, 2 * r, 2 * r);
+  }
+  if (selected >= 0) { // lines to neighbours
+    const [ax, ay] = toScreen(items[selected].x, items[selected].y);
+    ctx.strokeStyle = accent; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+    for (const [j] of items[selected].nn) { const [bx, by] = toScreen(items[j].x, items[j].y); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+  if (document.getElementById("labels").checked) {
+    ctx.font = "600 12px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    centroids.forEach((p, c) => {
+      const [sx, sy] = toScreen(p.x, p.y), t = `${c + 1}. ${clusterName(c)}`;
+      const w = ctx.measureText(t).width + 12;
+      ctx.fillStyle = surface; ctx.globalAlpha = 0.88; ctx.fillRect(sx - w / 2, sy - 10, w, 20);
+      ctx.globalAlpha = 1; ctx.fillStyle = css("--text-primary"); ctx.fillText(t, sx, sy);
+    });
+  }
+  document.getElementById("count").textContent = filter ? `${on.filter(Boolean).length} highlighted` : "";
+}
+
+function hit(mx, my) {
+  const S = mode === "pics" ? picSize() / 2 + 2 : 8;
+  let best = -1, bd = Infinity;
+  items.forEach((d, i) => {
+    const [sx, sy] = toScreen(d.x, d.y), dx = Math.abs(sx - mx), dy = Math.abs(sy - my);
+    if (dx < S && dy < S && dx + dy < bd && (!filter || matches(d, filter))) { bd = dx + dy; best = i; }
+  });
+  return best;
+}
+
+function zoomAt(mx, my, f) {
+  const k = Math.max(0.6, Math.min(40, view.k * f)); f = k / view.k;
+  view.tx = mx - (mx - view.tx) * f; view.ty = my - (my - view.ty) * f; view.k = k; draw();
+}
+function focus(list) { // fit view around these items
+  const b = base(), pts = list.map(i => [b.ox + b.s * items[i].x, b.oy + b.s * items[i].y]);
+  const x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]));
+  const y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+  const k = Math.max(1, Math.min(12, 0.8 * Math.min(W / Math.max(x1 - x0, 1), H / Math.max(y1 - y0, 1))));
+  view = { k, tx: W / 2 - k * (x0 + x1) / 2, ty: H / 2 - k * (y0 + y1) / 2 };
+  draw();
+}
+
+canvas.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.offsetX, e.offsetY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+let drag = null;
+canvas.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, moved: false }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener("pointermove", e => {
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; canvas.classList.add("dragging"); tip.style.display = "none"; }
+    if (drag.moved) { view.tx = drag.tx + dx; view.ty = drag.ty + dy; draw(); return; }
+  }
+  const i = hit(e.offsetX, e.offsetY);
+  if (i !== hover) { hover = i; draw(); }
+  if (i < 0) { tip.style.display = "none"; return; }
+  const d = items[i];
+  tip.innerHTML = `<img src="${d.img}" alt=""><b>${d.id}</b><div class="muted">${d.size[1]} × ${d.size[0]} cells · cluster ${d.c + 1}</div>`
+    + (d.tags.length ? `<div class="muted">tags: ${d.tags.join(", ")}</div>` : "");
+  tip.style.display = "block";
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  tip.style.left = Math.min(e.offsetX + 14, W - tw - 6) + "px";
+  tip.style.top = Math.min(e.offsetY + 14, H - th - 6) + "px";
+});
+canvas.addEventListener("pointerup", e => {
+  canvas.classList.remove("dragging");
+  if (drag && !drag.moved) select(hit(e.offsetX, e.offsetY));
+  drag = null;
+});
+canvas.addEventListener("pointerleave", () => { hover = -1; tip.style.display = "none"; draw(); });
+canvas.addEventListener("dblclick", e => zoomAt(e.offsetX, e.offsetY, 2));
+
+// ---- side panel
+const panel = document.getElementById("panel");
+function select(i) {
+  selected = i; draw();
+  if (i < 0) return;
+  const d = items[i];
+  panel.innerHTML = `<h3>${d.id}</h3>
+    <div class="muted">book ${d.book} · ${d.size[1]} × ${d.size[0]} cells</div>
+    <div class="chips"><span class="chip">cluster ${d.c + 1}: ${clusterName(d.c)}</span>${d.tags.map(t => `<span class="chip">${t}</span>`).join("")}</div>
+    <img class="big" src="${d.img}" alt="${d.id}">
+    <div class="muted" style="font-size:13px">Most similar (cosine similarity; 1 = identical)</div>
+    <div class="nn">${d.nn.map(([j, s]) => `<figure data-i="${j}"><img src="${items[j].img}" alt="${items[j].id}" title="${items[j].id}"><figcaption>${s.toFixed(2)}${items[j].c !== d.c ? " ·c" + (items[j].c + 1) : ""}</figcaption></figure>`).join("")}</div>
+    <p class="note" style="margin-top:10px">“·cN” marks a neighbour in a different cluster.</p>`;
+}
+panel.addEventListener("click", e => { const f = e.target.closest("figure"); if (f) { const j = +f.dataset.i; select(j); focus([j, ...items[j].nn.map(n => n[0])]); } });
+
+// ---- controls
+const setMode = m => { mode = m; document.getElementById("modePics").setAttribute("aria-pressed", m === "pics"); document.getElementById("modeDots").setAttribute("aria-pressed", m === "dots"); draw(); };
+document.getElementById("modePics").onclick = () => setMode("pics");
+document.getElementById("modeDots").onclick = () => setMode("dots");
+hl.onchange = () => { filter = hl.value; draw(); };
+document.getElementById("labels").onchange = draw;
+document.getElementById("reset").onclick = () => { view = { k: 1, tx: 0, ty: 0 }; draw(); };
+document.getElementById("find").addEventListener("change", e => {
+  const i = items.findIndex(d => d.id === e.target.value.trim());
+  if (i >= 0) { select(i); focus([i, ...items[i].nn.map(n => n[0])]); }
+});
+
+// ---- cluster cards
+document.getElementById("clusters").innerHTML = clusters.map((c, ci) => {
+  const counts = {}; items.filter(d => d.c === ci).forEach(d => counts[d.book] = (counts[d.book] || 0) + 1);
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([b, n]) => `book ${b}: ${n}`).join(", ");
+  const tg = {}; items.filter(d => d.c === ci).forEach(d => d.tags.forEach(t => tg[t] = (tg[t] || 0) + 1));
+  const tagLine = Object.entries(tg).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} ${n}`).join(", ");
+  return `<div class="card"><header><h3>${ci + 1}. ${clusterName(ci)}</h3><span class="n">${c.n} patterns</span></header>
+    <div class="reps">${c.reps.map(j => `<figure data-i="${j}"><img src="${items[j].img}" alt="${items[j].id}" title="${items[j].id}"></figure>`).join("")}</div>
+    <div class="muted" style="font-size:12px">Mostly ${top}</div>
+    <div class="muted" style="font-size:12px">Your tags: ${tagLine || "none yet"}</div>
+    <button data-c="${ci}" style="margin-top:6px">Show on map</button></div>`;
+}).join("");
+document.getElementById("clusters").addEventListener("click", e => {
+  const b = e.target.closest("button"), f = e.target.closest("figure");
+  if (b) {
+    const c = +b.dataset.c; hl.value = filter = "c:" + c;
+    focus(items.map((d, i) => d.c === c ? i : -1).filter(i => i >= 0));
+    wrap.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else if (f) {
+    const j = +f.dataset.i; select(j); focus([j, ...items[j].nn.map(n => n[0])]);
+    wrap.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+});
+
+// ---- heatmap
+(function heat() {
+  const M = clusters.map((_, c) => books.map(b => items.filter(d => d.c === c && d.book === b).length));
+  const max = Math.max(...M.flat()), steps = 8;
+  const step = v => v === 0 ? 0 : Math.min(steps - 1, 1 + Math.floor((v / max) * (steps - 1)));
+  const bookTotals = books.map((_, j) => M.reduce((s, r) => s + r[j], 0));
+  document.getElementById("heat").innerHTML =
+    `<tr><th></th>${books.map(b => `<th>${b}</th>`).join("")}<th>total</th></tr>`
+    + M.map((r, c) => `<tr><th class="row">${c + 1}. ${clusterName(c)}</th>${r.map((v, j) => {
+        const s = step(v);
+        return `<td class="${s >= 4 ? "dark" : ""}" style="background:var(--seq-${s})" title="${v} of book ${books[j]}'s ${bookTotals[j]} patterns are in cluster ${c + 1}">${v || ""}</td>`;
+      }).join("")}<td class="total">${clusters[c].n}</td></tr>`).join("")
+    + `<tr><th class="row">total</th>${bookTotals.map(t => `<td class="total">${t}</td>`).join("")}<td class="total">${items.length}</td></tr>`;
+  document.getElementById("heatLegend").innerHTML = `0 ${Array.from({ length: steps }, (_, s) => `<i style="background:var(--seq-${s})"></i>`).join("")} ${max} patterns`;
+})();
+
+window.addEventListener("resize", resize);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+Promise.all(items.map(d => d.im.decode().catch(() => {}))).then(draw);
+resize();
+</script>
+</body>
+</html>

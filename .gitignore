@@ -4,6 +4,7 @@ __pycache__/
 catalog/embeddings.npy
 catalog/ids.json
 catalog/duplicates.json
+catalog/map.html
 generator/c_model/dataset.npz
 generator/c_model/out/
 generator/c_model/checkpoints/

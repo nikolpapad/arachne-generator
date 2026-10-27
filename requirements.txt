@@ -6,3 +6,4 @@
 open_clip_torch>=3.3
 fastapi>=0.115
 uvicorn>=0.30
+umap-learn>=0.5
