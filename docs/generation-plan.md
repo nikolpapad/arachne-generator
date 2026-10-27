@@ -134,12 +134,37 @@ drawing different strokes. If we hit a wall, diffusion is the escape hatch.
 
 ## Roadmap
 
-### Phase 1: pix2pix baseline (next)
+### Phase 1: pix2pix baseline (done)
 
 - [x] Merge `gan-experiments` into `main` (pix2pix + notebook; `train_free.py` left on the branch)
-- [ ] Train pix2pix on Colab, starting from the U-Net checkpoint
-- [ ] Judge sample sheets: are the figures sharp and coherent?
-- [ ] If yes → Phase 2. If texture is wrong → Phase 3 first.
+- [x] Train pix2pix on Colab, starting from the U-Net checkpoint
+- [x] Judge sample sheets. **Result (2026-10-27):** real filet texture (white line
+  work, heads, hats) that follows the stroke, and no copying. But every figure is
+  the same robed person: no arms, objects or vines, and lots of single-cell speckle.
+  Test L1 stopped improving around epoch 120.
+
+**Why:** a head-to-feet line says where the figure stands, but nothing about its
+width, arms or what it holds. The model can't know, so it draws the average.
+
+### Phase 1b: rough-shape input (next)
+
+The user paints a rough, blocky silhouette instead of a line. The model's job
+becomes "fill this outline with filet detail" (face, folds, line work, vines),
+which is what pix2pix is best at.
+
+- `--input shape` (now the default in `train.py` and `train_gan.py`): each figure
+  seen through blocks of 6 cells, a block on where ≥35% of it is motif. In
+  training the block size (5–8) and the threshold (20–50%) vary, so coarse or
+  sloppy painting still works. Made on the fly from the real figure, so no new
+  labelling.
+- `--input stroke` keeps the old behaviour for comparison.
+- The sample sheets' third column is now despeckled: motif pieces and ground holes
+  under 3 cells are removed.
+
+- [ ] Train the U-Net with shape input (`train.py`, 150 epochs)
+- [ ] Train pix2pix from it (`train_gan.py --start-from …/best.pt`, 150 epochs)
+- [ ] Judge: does the detail look like the catalog and vary between figures?
+  Watch for copying: the shape gives the outline, the model must invent the inside.
 
 ### Phase 2: class-conditional + polish
 

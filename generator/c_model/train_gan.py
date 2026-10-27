@@ -7,12 +7,12 @@ trained to fool it, which pushes it to commit to one sharp, believable figure.
 
 Generator loss = adversarial (fool the critic) + --l1 x L1 to the real figure. L1 keeps
 the figure in the right place along the stroke; the critic makes it look stitched.
-Same data, augmentation and test figures as train.py.
+Same data, inputs (--input shape or stroke), augmentation and test figures as train.py.
 
 Every --every epochs it writes, next to train.py's files without touching them:
   checkpoints/gan_last.pt                     generator + critic
   out/gan_log.csv                             epoch, losses, test L1, test IoU
-  out/gan_samples_<epoch>.png                 per test figure: path | model | model thresholded | real
+  out/gan_samples_<epoch>.png                 per test figure: input | model | thresholded, specks removed | real
 There is no "best" checkpoint: GAN losses don't say which epoch looks best, the samples do.
 IoU will likely go *down* compared with train.py; a sharp figure in a different pose
 overlaps the real one less than a blur does.
@@ -27,7 +27,7 @@ import torch
 from torch import nn
 
 from model import PatchDiscriminator, UNet
-from train import Figures, progress, sample_sheet
+from train import CHANNELS, Figures, progress, sample_sheet
 
 HERE = Path(__file__).resolve().parent
 
@@ -39,6 +39,7 @@ def adversarial(scores, real):
 
 def main():
     args = argparse.ArgumentParser()
+    args.add_argument("--input", choices=CHANNELS, default="shape", help="what the generator is given (see train.py)")
     args.add_argument("--epochs", type=int, default=300)
     args.add_argument("--batch", type=int, default=16)
     args.add_argument("--lr", type=float, default=2e-4)
@@ -52,17 +53,19 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = np.load(HERE / "dataset.npz")
     test = data["test"]
-    train_set, test_set = Figures(data, ~test, augment=True), Figures(data, test, augment=False)
+    train_set, test_set = Figures(data, ~test, True, args.input), Figures(data, test, False, args.input)
     loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch, shuffle=True, drop_last=True)
     x_test, y_test = (torch.stack(t).to(device) for t in zip(*[test_set[i] for i in range(len(test_set))]))
 
-    gen = UNet(width=args.width).to(device)
+    gen = UNet(c_in=CHANNELS[args.input], width=args.width).to(device)
     if args.start_from:
         state = torch.load(args.start_from, map_location=device)
         if state["width"] != args.width:
             raise SystemExit(f"{args.start_from} has width {state['width']}; pass --width {state['width']}")
+        if state.get("input", "stroke") != args.input:
+            raise SystemExit(f"{args.start_from} was trained with --input {state.get('input', 'stroke')}")
         gen.load_state_dict(state["model"])
-    critic = PatchDiscriminator().to(device)
+    critic = PatchDiscriminator(c_in=CHANNELS[args.input] + 1).to(device)
     # betas (0.5, 0.999): the pix2pix setting; less momentum keeps the two networks from overshooting
     opt_g = torch.optim.Adam(gen.parameters(), lr=args.lr, betas=(0.5, 0.999))
     opt_d = torch.optim.Adam(critic.parameters(), lr=args.lr, betas=(0.5, 0.999))
@@ -74,7 +77,7 @@ def main():
     writer = csv.writer(log)
     writer.writerow(["epoch", "critic_loss", "gen_adv_loss", "gen_l1", "test_l1", "test_iou"])
     print(f"{len(train_set)} train, {len(test_set)} test figures on {device}, "
-          f"generator {sum(p.numel() for p in gen.parameters()) / 1e6:.1f}M, "
+          f"input {args.input}, generator {sum(p.numel() for p in gen.parameters()) / 1e6:.1f}M, "
           f"critic {sum(p.numel() for p in critic.parameters()) / 1e6:.1f}M parameters"
           + (f", generator from {args.start_from}" if args.start_from else ""))
 
@@ -121,6 +124,7 @@ def main():
         print(f"epoch {epoch:4d}  critic {d_loss:.3f}  gen adv {g_adv:.3f}  L1 {g_l1:.3f}  "
               f"test L1 {test_l1:.3f}  IoU {iou:.3f}  {time.time() - start:.0f}s")
         torch.save({"model": gen.state_dict(), "critic": critic.state_dict(), "width": args.width,
+                    "input": args.input,
                     "epoch": epoch, "test_l1": test_l1}, HERE / "checkpoints" / "gan_last.pt")
         sample_sheet(x_test, logits, y_test, HERE / "out" / f"gan_samples_{epoch:04d}.png")
     log.close()
