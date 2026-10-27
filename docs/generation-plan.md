@@ -1,256 +1,154 @@
-# Generation plan: stroke → filet crochet figure
+# Generation plan: rough shape → filet crochet figure
 
-**Goal.** Draw a stroke on an empty grid, get back a filet crochet human figure
-that looks like it belongs in the Arachne catalog — not a copy of one pattern,
-not a blob of noise, but a coherent new figure faithful to the collection's
-aesthetic. Vines, objects and decorative context around figures are part of the
-style.
+**This is the current plan.** Older docs (`c-model-report.md`,
+`handoff-neural-network.md`) record how we got here; this file says where we are
+and what comes next.
+
+**Goal.** On an empty grid, the user paints a rough, blocky silhouette and gets
+back a filet crochet human figure that looks like it belongs in the Arachne
+catalog: not a copy of one pattern and not a blob of noise, but a coherent new
+figure faithful to the collection's look. Vines, objects and decoration touching
+the figure are part of the style.
 
 **Output format:** `{w, h, rows, palette}`, motif = `"0"`, ground = `"1"`.
 
 ---
 
-## What we have
+## Where we are (2026-10-27)
+
+### Data
 
 | Asset | Count | Notes |
 |---|---|---|
-| Catalog patterns | 2283 | All of them, unlabelled |
+| Catalog patterns | 2283 unique | All of them, unlabelled |
 | Tagged patterns | 442 | human 286, putti 188, animal 106, woman 16 |
-| Reviewed bounding boxes | 597 | In `motif_boxes.json`, 285 patterns |
-| Full-figure training pairs (128×128) | **384** | In `dataset.npz` |
-| ↳ from putti-tagged pages | 247 | ~64% of the set |
-| ↳ from animal-tagged pages | 4 | Riders on horses |
-| ↳ adults only | 133 | Adults without putti or animal tags |
-| Patterns with usable boxes | 184 | Some give 2–6 figures each |
+| Reviewed bounding boxes | 597 | `motif_boxes.json`, 285 patterns |
+| Full-figure training pairs (128×128) | **384** | `dataset.npz`: 346 train, 38 test (21 held-out patterns) |
+| ↳ from putti-tagged pages | 247 | about 2/3 of the set |
+| ↳ adults | 133 | |
+| ↳ riders (animal-tagged pages) | 4 | |
+| 128×128 pieces in the whole catalog | about 4600 | With 3–85% motif; not built yet (Phase 2) |
 
-### What we built
+### Code (`generator/c_model/`)
 
-| File | Purpose | Status |
+| File | What it does |
+|---|---|
+| `boxes.py` + `boxes.html` | Review page: box each figure, label its kind |
+| `prepare.py` | Boxes → cleaned, centred figures + head-to-feet strokes → `dataset.npz` |
+| `model.py` | `UNet` (generator) and `PatchDiscriminator` (critic) |
+| `train.py` | Plain U-Net training. `--input shape` (default) or `stroke` |
+| `train_gan.py` | pix2pix training (U-Net + critic), `--start-from` a checkpoint |
+| `colab_train.ipynb` | Runs any training script on a Colab GPU, results to Drive |
+
+`train_free.py` (a GAN with no input at all) stays on the `gan-experiments`
+branch only. It isn't on the path to the drawing tool.
+
+### What we learned, run by run
+
+| Run | Input | Result |
 |---|---|---|
-| `catalog/` (embed, serve, search, count, load) | Tag patterns, find motifs | Done, on main |
-| `boxes.py` + `boxes.html` | Review page: box each figure, label its kind | Done, on main |
-| `prepare.py` | Cut, clean, spine, build dataset.npz | Done, on main |
-| `model.py` | U-Net, PatchDiscriminator, Generator, Critic | Done (U-Net on main, GAN parts on gan-experiments) |
-| `train.py` | U-Net training loop | Done, on main |
-| `train_gan.py` | pix2pix training loop | Done, on gan-experiments |
-| `train_free.py` | Unconditional GAN (DiffAugment) | Done, on gan-experiments |
-| `colab_train.ipynb` | Colab notebook for any training script | Done, on gan-experiments |
+| U-Net | stroke | Blurry silhouettes along the stroke, no inner detail. One stroke fits many figures, so it paints their average. |
+| pix2pix | stroke | Sharp, filet-looking texture, no copying. But **every figure is the same robed person**: no arms, objects or vines. A stroke says too little about the figure. |
+| U-Net → pix2pix, 450 epochs | **rough shape** | **Pose and outline now right** (raised arms, putti, dancers), heads with hair. But the **inside is random white dots**, not the clean 1-cell white lines (folds, outlines of limbs) of real filet. Test L1 flat from about epoch 80; critic loss about 0.55, so it barely tells real from fake. |
 
-### What we learned
-
-1. **The U-Net works but blurs.** It learns "a figure goes along the stroke"
-   but outputs a soft silhouette — no internal line work, no stitched detail.
-   This is normal: one stroke fits many figures, so the U-Net paints their
-   average.
-2. **The data is mostly putti.** 247 of 384 figures come from putti pages.
-   That's not bad — putti are the most consistent group (similar size, poses,
-   always with vines). Adults are more varied (armour, dresses, riders).
-3. **384 figures is small but workable** for pix2pix with proper
-   regularisation. Free GANs (no conditioning) struggle at this scale.
-4. **Clutter inside boxes** (vines, neighbour hands) is not hurting much.
-   The connected-component cleanup removes separate pieces. Touching context
-   stays in, but for putti that *is* the style.
+**What the last run tells us.** The model has not learned what filet line work
+looks like. Its 346 human figures are too few to learn it from, and the critic
+learned from the same 346, so it can't teach it either. Changing the loss (for
+example comparing blurred versions) wouldn't add that missing knowledge. More
+examples of line work would.
 
 ---
 
-## The three options, ranked
+## Next step: Phase 2, pretraining on the whole catalog
 
-### Option 1: pix2pix (recommended starting point)
+**Full spec: [catalog-pretraining.md](catalog-pretraining.md).** Built on the
+branch `catalog-pretrain`.
 
-**What it is.** The U-Net becomes a *generator*. A second network (the
-PatchDiscriminator) sees real and generated figures side by side with their
-strokes, and learns to tell them apart. The generator is trained to fool it.
-The critic forces the generator to commit to one sharp, believable figure
-instead of averaging.
+The task the model learns ("here is a blocky outline, fill in the filet
+detail") doesn't need human boxes. It works on any piece of any pattern, and
+every pattern in the catalog uses the same white-line style: vines, flowers,
+animals, borders, figures.
 
-**Why it's the best first step:**
-- Directly fixes the blur problem we saw.
-- The code already exists (`train_gan.py`, `PatchDiscriminator` in `model.py`).
-- The L1 term keeps the figure on the stroke, so it's stable even with few
-  data.
-- Standard technique, well understood, trains in minutes on a T4.
+1. Cut about 4600 128×128 pieces from all catalog patterns (`catalog.npz`).
+2. Pretrain the same U-Net → pix2pix on them: rough shape in, real detail out.
+   This is where it should learn lines, folds and curls.
+3. Fine-tune on the 346 human figures, so it learns what *human* detail looks
+   like on top.
+4. Compare with the last run on the same 38 test figures.
 
-**Limitations:**
-- Still one answer per stroke (deterministic once trained). Two identical
-  strokes give the same figure.
-- With only 384 figures the critic can memorise them, which makes training
-  unstable after many epochs. Spectral norm and the L1 weight help.
-- The output will look like the training data: mostly putti, some adults.
-
-**Training plan:**
-1. Start from the best U-Net checkpoint (`--start-from best.pt`), so the
-   generator already knows the rough shape.
-2. 300 epochs, `--l1 100` (high L1 keeps it grounded), lr 2e-4.
-3. Judge by the sample sheets, not the loss curves — GAN losses bounce.
-
-### Option 2: class-conditional pix2pix (recommended extension)
-
-**What it is.** Same as option 1, but the generator and critic also receive a
-**category label** (putti / adult / animal) as an extra input channel.
-
-**Why it helps:**
-- Everything about *how filet is drawn* (stitch texture, white line work, how
-  edges step) is learned from all 384 figures together.
-- Only *what* to draw comes from the label. At use time you choose: "draw a
-  putto along this stroke" or "draw an adult."
-- The putti figures teach the model filet style; the adults teach it adult
-  poses. Both benefit.
-- This is the standard answer to "few examples per category."
-
-**What it takes:**
-- Add a category label to `prepare.py` (from `tags.json`: if putti-tagged →
-  putti, else → adult; riders are too few to separate).
-- One extra input channel in the U-Net and critic (a constant plane: 0 for
-  putti, 1 for adult).
-- About 30 lines of code change.
-
-### Option 3: inpainting pretraining + fine-tuning (recommended if options 1–2 plateau)
-
-**What it is.** Before training on figures, teach the network "what filet
-looks like" using **all 2283 patterns** with no labels:
-1. Take a random pattern, hide a random rectangle, ask the network to fill
-   it in.
-2. The network learns stitch texture, line work, symmetry — everything that
-   makes filet look like filet — from 6× more data.
-3. Then fine-tune on the 384 figure pairs, where it only needs to learn
-   *what shape to draw*, not *how filet is drawn*.
-
-**Why it's powerful but second:**
-- It's the biggest data leverage we have (2283 vs 384).
-- But it's more code (a separate pretraining dataset, a masked input, a two-
-  phase training loop) and we should first see if pix2pix alone is enough.
-- If pix2pix gives sharp figures but the texture still looks off, this is
-  the fix.
-
-### What about diffusion?
-
-A diffusion model can give *different* figures for the same stroke (it samples
-from possibilities instead of picking the average). That's the ideal end state.
-But it needs more code, more training time, and more data to converge. **Park
-it.** If pix2pix works well, the figures are good enough — variety comes from
-drawing different strokes. If we hit a wall, diffusion is the escape hatch.
+Patterns that hold human test figures are kept out of pretraining, so the test
+stays fair.
 
 ---
 
 ## Roadmap
 
-### Phase 1: pix2pix baseline (done)
+### Phase 1: first models (done)
+- [x] U-Net, stroke input
+- [x] pix2pix, stroke input
+- [x] Rough-shape input, U-Net → pix2pix
 
-- [x] Merge `gan-experiments` into `main` (pix2pix + notebook; `train_free.py` left on the branch)
-- [x] Train pix2pix on Colab, starting from the U-Net checkpoint
-- [x] Judge sample sheets. **Result (2026-10-27):** real filet texture (white line
-  work, heads, hats) that follows the stroke, and no copying. But every figure is
-  the same robed person: no arms, objects or vines, and lots of single-cell speckle.
-  Test L1 stopped improving around epoch 120.
+### Phase 2: pretrain on the whole catalog (next, branch `catalog-pretrain`)
+- [ ] `prepare_catalog.py` → `catalog.npz`, with review sheets
+- [ ] `--data` option in `train.py` and `train_gan.py`; critic also loaded by `--start-from`
+- [ ] Notebook: choose which data file to use
+- [ ] Pretrain U-Net, then pix2pix, on the catalog (Colab)
+- [ ] Fine-tune pix2pix on the human figures
+- [ ] Judge against the Phase 1 rough-shape run. Is there real line work now?
 
-**Why:** a head-to-feet line says where the figure stands, but nothing about its
-width, arms or what it holds. The model can't know, so it draws the average.
+### Phase 3: polish and the drawing tool (once the figures look right)
+- [ ] Putti / adult label as an extra input, so you can choose which you get
+- [ ] `sample.py`: painted shape in → `{w, h, rows, palette}` out, despeckled
+- [ ] `evaluate.py`: nearest training figure next to each output (copy check)
+- [ ] Drawing page: paint blocks on a grid, get a figure back
 
-### Phase 1b: rough-shape input (next)
-
-The user paints a rough, blocky silhouette instead of a line. The model's job
-becomes "fill this outline with filet detail" (face, folds, line work, vines),
-which is what pix2pix is best at.
-
-- `--input shape` (now the default in `train.py` and `train_gan.py`): each figure
-  seen through blocks of 6 cells, a block on where ≥35% of it is motif. In
-  training the block size (5–8) and the threshold (20–50%) vary, so coarse or
-  sloppy painting still works. Made on the fly from the real figure, so no new
-  labelling.
-- `--input stroke` keeps the old behaviour for comparison.
-- The sample sheets' third column is now despeckled: motif pieces and ground holes
-  under 3 cells are removed.
-
-- [ ] Train the U-Net with shape input (`train.py`, 150 epochs)
-- [ ] Train pix2pix from it (`train_gan.py --start-from …/best.pt`, 150 epochs)
-- [ ] Judge: does the detail look like the catalog and vary between figures?
-  Watch for copying: the shape gives the outline, the model must invent the inside.
-
-### Phase 2: class-conditional + polish
-
-- [ ] Add putti/adult label to `prepare.py` and the model
-- [ ] Train class-conditional pix2pix
-- [ ] Build `sample.py`: stroke in → `{w, h, rows, palette}` out
-- [ ] Build `evaluate.py`: nearest-neighbour copy check
-- [ ] Integrate into the interactive grid page
-
-### Phase 3: inpainting pretraining (if needed)
-
-- [ ] Build inpainting dataset from all 2283 patterns
-- [ ] Pretrain the U-Net encoder on masked fill-in
-- [ ] Fine-tune on figure pairs
-- [ ] Compare with non-pretrained version
-
-### Phase 4: more data (ongoing, independent)
-
-- [ ] Tag more putti patterns (188 → 200+ for its own category)
-- [ ] Use the 65 tall figures with a 192×192 canvas
+### Phase 4: more data (any time, independent)
+- [ ] Tag more putti patterns (188 → 200+)
+- [ ] Use the 65 figures taller than 128 cells (bigger canvas)
 - [ ] Add "other human" boxes (groups, half figures)
-- [ ] Tag and box animals if the model generalises well
+
+### Parked
+- **Diffusion model:** can give different figures for the same shape. More
+  code and training time; only if pix2pix hits a wall after pretraining.
+- **Blurred-L1 loss:** dropped. It changes how mistakes are scored, but doesn't
+  give the model the missing knowledge of line work.
 
 ---
 
-## Repo plan
+## Repo and bookkeeping
 
-### Branches
-
-The `gan-experiments` branch served its purpose as an exploration space. The
-useful code (pix2pix, colab notebook) should come to `main`. Going forward:
-
-- **`main`**: all working code. Train scripts, model, data prep.
-- **Feature branches**: short-lived, for one change at a time, merged to main
-  when done.
-
-No more long-lived experiment branches — they get confusing.
-
-### Files that stay
-
-```
-generator/c_model/
-  boxes.py + boxes.html     bounding box review tool
-  prepare.py                dataset builder
-  model.py                  all network architectures
-  train.py                  U-Net training (baseline)
-  train_gan.py              pix2pix training
-  colab_train.ipynb         Colab notebook
-  sample.py                 (to build) stroke → grid output
-  evaluate.py               (to build) copy-paste check
-```
-
-### Files to drop
-
-- `train_free.py` — the unconditional GAN was an experiment. It's not on the
-  path to the interactive tool. Keep it on the `gan-experiments` branch for
-  reference but don't merge to main.
-
-### Data files (gitignored)
-
-- `generator/c_model/dataset.npz` — the training pairs
-- `generator/c_model/out/` — sample sheets, logs
-- `generator/c_model/checkpoints/` — model weights
+- **`main`**: working code only.
+- **One short branch per step**, merged into `main` with `git merge` (never
+  rebase) when the step is done and judged. Now: `catalog-pretrain`.
+- **Commits:** small, one logical change each, written as the user's own, with
+  no co-author or Claude sign-off line.
+- **Not in git** (`.gitignore`): `data/`, `dataset.npz`, `catalog.npz`, `out/`,
+  `checkpoints/`. Data files go to Colab through Google Drive
+  (`MyDrive/arachne/`).
+- **Results:** every Colab run gets its own folder,
+  `MyDrive/arachne/runs/<date>_<branch>_<script>/`, so runs never overwrite each other.
 
 ---
 
 ## Decisions already made
 
-These are settled — no need to revisit unless something breaks.
-
 | Decision | Reason |
 |---|---|
-| 128×128 canvas, no resizing | Filet figures at different sizes are drawn differently; resizing corrupts the stitch pattern |
+| 128×128 canvas, no resizing | Filet figures at different sizes are drawn differently; resizing corrupts the stitches |
 | Full figures only (for now) | Biggest consistent group (449 boxes, 384 fit the canvas) |
-| Head-to-feet spine as stroke | Sets a clear rule for the interactive tool: "draw one stroke, head to feet" |
-| Connected-component cleanup, keep ≥15% of largest | Removes loose border pieces; touching context (vines, swords) stays in, which is fine for the style |
-| 10% held-out patterns (not figures) | Figures from the same page look alike; pattern-level split prevents data leaking |
-| Left-right flip + shift + path jitter | Safe augmentations for upright figures |
-| BCE + Dice loss | Dice prevents the "all ground" trap on sparse motifs |
-| No Claude sign-off in commits | Per user preference |
+| Rough blocky shape as input (blocks of 6, on at ≥35% motif; random 5–8 and 20–50% in training) | A line says too little; a shape gives pose and outline, and the model supplies the detail |
+| Connected-component cleanup, keep pieces ≥15% of the largest | Removes loose border bits; touching context stays, which suits the style |
+| Test split by pattern, not by figure | Figures from the same page look alike; splitting by figure would leak |
+| Left-right flip + shift | Safe for upright figures |
+| BCE + Dice (U-Net); adversarial + L1 ×100 (pix2pix) | Dice avoids "all ground"; L1 keeps the figure on the shape |
+| Despeckle outputs (pieces and holes under 3 cells) | Single cells don't crochet well |
+| Judge GANs by the sample sheets, not the numbers | GAN numbers bounce and don't measure looks |
 
 ---
 
 ## Open questions
 
-1. **After seeing pix2pix results:** sharp enough, or do we need pretraining?
-2. **Interactive page design:** how should the drawing tool work? (Depends on
-   `sample.py` being built first.)
-3. **Animals:** worth pursuing separately, or only if humans work well?
+1. After Phase 2: is the line work good enough, or do we need diffusion?
+2. Drawing page: block size the user paints with (6 cells?), and can they
+   paint the head separately?
+3. Animals: their own model, or a label in the same one?
