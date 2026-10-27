@@ -27,7 +27,7 @@ the figure are part of the style.
 | ↳ from putti-tagged pages | 247 | about 2/3 of the set |
 | ↳ adults | 133 | |
 | ↳ riders (animal-tagged pages) | 4 | |
-| 128×128 pieces in the whole catalog | about 4600 | With 3–85% motif; not built yet (Phase 2) |
+| 128×128 pieces in the whole catalog | **7147** | `catalog.npz`: 6736 train, 411 test, 3–85% motif, from 2263 patterns |
 
 ### Code (`generator/c_model/`)
 
@@ -35,9 +35,10 @@ the figure are part of the style.
 |---|---|
 | `boxes.py` + `boxes.html` | Review page: box each figure, label its kind |
 | `prepare.py` | Boxes → cleaned, centred figures + head-to-feet strokes → `dataset.npz` |
+| `prepare_catalog.py` | Every catalog pattern → 128×128 pieces → `catalog.npz` (pretraining), with leak guard |
 | `model.py` | `UNet` (generator) and `PatchDiscriminator` (critic) |
-| `train.py` | Plain U-Net training. `--input shape` (default) or `stroke` |
-| `train_gan.py` | pix2pix training (U-Net + critic), `--start-from` a checkpoint |
+| `train.py` | Plain U-Net training. `--input shape` (default) or `stroke`; `--data` picks the data file |
+| `train_gan.py` | pix2pix training (U-Net + critic), `--start-from` a checkpoint (critic too, if it has one) |
 | `colab_train.ipynb` | Runs any training script on a Colab GPU, results to Drive |
 
 `train_free.py` (a GAN with no input at all) stays on the `gan-experiments`
@@ -69,7 +70,7 @@ detail") doesn't need human boxes. It works on any piece of any pattern, and
 every pattern in the catalog uses the same white-line style: vines, flowers,
 animals, borders, figures.
 
-1. Cut about 4600 128×128 pieces from all catalog patterns (`catalog.npz`).
+1. Cut 7147 128×128 pieces from all catalog patterns (`catalog.npz`).
 2. Pretrain the same U-Net → pix2pix on them: rough shape in, real detail out.
    This is where it should learn lines, folds and curls.
 3. Fine-tune on the 346 human figures, so it learns what *human* detail looks
@@ -77,7 +78,10 @@ animals, borders, figures.
 4. Compare with the last run on the same 38 test figures.
 
 Patterns that hold human test figures are kept out of pretraining, so the test
-stays fair.
+stays fair, along with their copies (including two near-copies of 006_page_18
+that `duplicates.json` misses). Those two near-copies are already training
+patterns in `dataset.npz`, so 006_page_18's test figures were seen in training
+in Phase 1 too: judge them with care.
 
 ---
 
@@ -89,9 +93,9 @@ stays fair.
 - [x] Rough-shape input, U-Net → pix2pix
 
 ### Phase 2: pretrain on the whole catalog (next, branch `catalog-pretrain`)
-- [ ] `prepare_catalog.py` → `catalog.npz`, with review sheets
-- [ ] `--data` option in `train.py` and `train_gan.py`; critic also loaded by `--start-from`
-- [ ] Notebook: choose which data file to use
+- [x] `prepare_catalog.py` → `catalog.npz`, with review sheets
+- [x] `--data` option in `train.py` and `train_gan.py`; critic also loaded by `--start-from`
+- [x] Notebook: choose which data file to use
 - [ ] Pretrain U-Net, then pix2pix, on the catalog (Colab)
 - [ ] Fine-tune pix2pix on the human figures
 - [ ] Judge against the Phase 1 rough-shape run. Is there real line work now?

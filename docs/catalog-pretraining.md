@@ -1,6 +1,6 @@
 # Phase 2: pretraining on the whole catalog
 
-**Status (2026-10-27): planned, not built.** Branch: `catalog-pretrain`.
+**Status (2026-10-27): built and checked on CPU; the three Colab runs are next.** Branch: `catalog-pretrain`.
 Context and history: [generation-plan.md](generation-plan.md).
 
 ## Why
@@ -49,6 +49,15 @@ Run: `python generator/c_model/prepare_catalog.py` (about 5–15 minutes on CPU)
   those patterns. Otherwise the model would see the test figures during
   pretraining and the comparison would be unfair. Print how many were skipped
   and `assert` that none slipped through.
+  *As built:* `ids[test]` is 18 patterns, not 21: 3 of prepare.py's 21 held-out
+  patterns only have figures taller than 128, so none of their figures are in
+  `dataset.npz`. `duplicates.json` only lists pixel-identical copies, so
+  `NEAR_COPIES` in `prepare_catalog.py` adds two more found by comparing every
+  pattern with the test ones: 006_page_19 (same design as 006_page_18, ~9% of
+  cells differ) and 008_page_70 (the same putti redrawn). 22 patterns are
+  skipped in all. Both near-copies are *training* patterns in `dataset.npz`,
+  so that test figure was already seen in Phase 1 and will be in fine-tuning:
+  read 006_page_18's samples with that in mind.
 - Hold out about 5% of the remaining patterns (seed 0) as the pretraining test
   set. They're only used for test loss and sample sheets during pretraining.
 
@@ -60,7 +69,9 @@ Run: `python generator/c_model/prepare_catalog.py` (about 5–15 minutes on CPU)
   and bottom edges, so the edges are covered too.
 - Keep pieces with **3–85% motif**. Emptier ones teach nothing; fuller ones are
   solid black.
-- Expect about 4600 pieces. Pieces overlap, so neighbours share half their
+- Expect about 4600 pieces. *As built: 7147* (6736 train, 411 test). The 4600
+  counted only the pieces on the 64-cell grid (4587); the extra pieces flush
+  with the edges add about 2560. Pieces overlap, so neighbours share half their
   cells. That's fine, and both stay on the same side of the split because the
   split is by pattern.
 
@@ -71,7 +82,9 @@ Run: `python generator/c_model/prepare_catalog.py` (about 5–15 minutes on CPU)
 - `test` (N,) bool
 
 Use `np.savez_compressed`. Print the file size. If it's over about 100 MB,
-switch to `np.packbits`; we expect roughly 10–40 MB.
+switch to `np.packbits`; we expect roughly 10–40 MB. *As built: 10.2 MB.*
+Pieces are stored in shuffled order (seed 0), so the first 12 test pieces on the
+training sample sheets come from different patterns.
 
 **Review sheets:** `out/catalog_*.png`, a fixed random sample of about 96
 pieces, each with its rough shape tinted underneath (reuse `train.rough_shape`
@@ -126,9 +139,10 @@ Push the branch, and set `BRANCH = "catalog-pretrain"` in the notebook.
 | 2. Pretrain pix2pix | `train_gan.py` | `catalog.npz` | `--epochs 30 --every 2 --start-from <run 1>/checkpoints/best.pt` |
 | 3. Fine-tune on humans | `train_gan.py` | `dataset.npz` | `--epochs 150 --start-from <run 2>/checkpoints/gan_last.pt` |
 
-An epoch on the catalog is about 13 times longer than on the human figures
-(about 4400 pieces against 346). So 30 catalog epochs are about as many
-training steps as 400 human epochs. Start each run with `--quick` once, and
+An epoch on the catalog is about 19 times longer than on the human figures
+(6736 pieces against 346). So 30 catalog epochs are about as many training
+steps as 580 human epochs; if the time estimate is too long, 20 catalog epochs
+(about 390 human epochs) is the closest to what was planned. Start each run with `--quick` once, and
 read the progress bar's time estimate before committing to a long run.
 
 ## 5. How to judge
