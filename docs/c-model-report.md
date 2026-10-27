@@ -153,8 +153,8 @@ On the laptop:
 ```bash
 cd ~/arachne-generator
 python3 -m venv .venv
-.venv/bin/pip install numpy pillow scikit-image
 .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cu126
+.venv/bin/pip install -r requirements-train.txt
 .venv/bin/python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0), torch.cuda.get_arch_list())"
 ```
 

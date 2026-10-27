@@ -15,8 +15,13 @@ a step-by-step walkthrough with explanations of how and why it works.
 cd ~/arachne-generator
 python3 -m venv .venv
 .venv/bin/pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-.venv/bin/pip install open_clip_torch numpy pillow fastapi uvicorn scikit-image
+.venv/bin/pip install -r requirements.txt
 ```
+
+Torch is installed first and on its own, because the right build depends on the
+machine (CPU here; on a GPU machine use the CUDA index, e.g. `.../whl/cu126`).
+PyPI's default torchvision did not match and broke imports. For training only
+(e.g. on the GPU laptop), `requirements-train.txt` is enough.
 
 `data/previews` is a link to the pattern files in pattern-app
 (`apps/api/assets/previews`). Nothing is copied, and `data/` is not committed.
