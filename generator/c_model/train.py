@@ -1,5 +1,8 @@
 """Train the U-Net on dataset.npz.  Run:  python generator/c_model/train.py
 
+--data picks another data file with the same keys, e.g. catalog.npz (pieces of the whole
+catalog, from prepare_catalog.py) for pretraining. Stroke input needs dataset.npz: only it has paths.
+
 What the model is given (--input):
   shape   (default) a rough blocky silhouette: the figure seen through blocks of 5-8
           cells, the way a user would paint it with a big brush. The model adds the detail.
@@ -17,6 +20,7 @@ look like many more:
 Loss = BCE (each cell right or wrong) + Dice (overlap of the whole shape; keeps the
 model from just predicting "all ground", since motif is only ~8% of the canvas).
 
+At the start it writes out/train_settings.json: arguments, data file, sizes, device, start time.
 Every --every epochs it scores the held-out test figures (no augmentation) and writes:
   checkpoints/last.pt, checkpoints/best.pt   (best = lowest test loss)
   out/train_log.csv                          epoch, train loss, test loss, test IoU
@@ -24,7 +28,9 @@ Every --every epochs it scores the held-out test figures (no augmentation) and w
 """
 import argparse
 import csv
+import json
 import time
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -75,8 +81,11 @@ def despeckle(mask, smallest=SPECK):
 
 class Figures(torch.utils.data.Dataset):
     def __init__(self, data, which, augment, input="shape"):
+        if input == "stroke" and "points" not in data:
+            raise SystemExit("stroke input needs dataset.npz: this data file has no head-to-feet paths")
         self.motifs = data["motifs"][which].astype(bool)
-        self.points = [p[:n] for p, n in zip(data["points"][which], data["n_points"][which])]
+        if input == "stroke":
+            self.points = [p[:n] for p, n in zip(data["points"][which], data["n_points"][which])]
         self.augment = augment
         self.input = input
         self.rng = np.random.default_rng()
@@ -85,7 +94,8 @@ class Figures(torch.utils.data.Dataset):
         return len(self.motifs)
 
     def __getitem__(self, i):
-        motif, points = self.motifs[i], self.points[i].astype(float)
+        motif = self.motifs[i]
+        points = self.points[i].astype(float) if self.input == "stroke" else np.zeros((0, 2))  # no path to move
         if self.augment:
             if self.rng.random() < 0.5:
                 motif = motif[:, ::-1]
@@ -113,6 +123,13 @@ def progress(epoch, epochs, start, width=30):
     filled = round(width * epoch / epochs)
     print(f"\r[{'#' * filled}{'.' * (width - filled)}] epoch {epoch}/{epochs}  "
           f"{elapsed / 60:.0f} min done, ~{left / 60:.0f} min left ", end="", flush=True)
+
+
+def save_settings(path, args, data_path, n_train, n_test, device):
+    """Write how this run was made (every argument, data, sizes, device, start time) next to its results."""
+    settings = {**vars(args), "data_file": str(data_path), "train_items": n_train, "test_items": n_test,
+                "device": device, "started": datetime.now().isoformat(timespec="seconds")}
+    path.write_text(json.dumps(settings, indent=1, default=str))
 
 
 def dice_loss(logits, target):
@@ -151,6 +168,7 @@ def sample_sheet(x, logits, target, path, n=12, scale=2):
 def main():
     args = argparse.ArgumentParser()
     args.add_argument("--input", choices=CHANNELS, default="shape", help="what the model is given (see top of file)")
+    args.add_argument("--data", type=Path, default="dataset.npz", help="data file in generator/c_model/ or a full path")
     args.add_argument("--epochs", type=int, default=300)
     args.add_argument("--batch", type=int, default=16)
     args.add_argument("--lr", type=float, default=1e-3)
@@ -160,7 +178,8 @@ def main():
     args = args.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    data = np.load(HERE / "dataset.npz")
+    data_path = HERE / args.data  # a full path stays as it is
+    data = np.load(data_path)
     test = data["test"]
     train_set, test_set = Figures(data, ~test, True, args.input), Figures(data, test, False, args.input)
     loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch, shuffle=True, drop_last=True)
@@ -172,10 +191,11 @@ def main():
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, epochs)  # lr slides down to 0 by the end
     (HERE / "checkpoints").mkdir(exist_ok=True)
     (HERE / "out").mkdir(exist_ok=True)
+    save_settings(HERE / "out" / "train_settings.json", args, data_path, len(train_set), len(test_set), device)
     log = open(HERE / "out" / "train_log.csv", "w", newline="")
     writer = csv.writer(log)
     writer.writerow(["epoch", "train_loss", "test_loss", "test_iou"])
-    print(f"{len(train_set)} train, {len(test_set)} test figures on {device}, input {args.input}, "
+    print(f"{len(train_set)} train, {len(test_set)} test items from {data_path.name} on {device}, input {args.input}, "
           f"{sum(p.numel() for p in net.parameters()) / 1e6:.1f}M parameters")
 
     best, start = float("inf"), time.time()

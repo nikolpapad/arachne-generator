@@ -7,8 +7,14 @@ trained to fool it, which pushes it to commit to one sharp, believable figure.
 
 Generator loss = adversarial (fool the critic) + --l1 x L1 to the real figure. L1 keeps
 the figure in the right place along the stroke; the critic makes it look stitched.
-Same data, inputs (--input shape or stroke), augmentation and test figures as train.py.
+Same data, inputs (--input shape or stroke), augmentation and test figures as train.py,
+and the same --data option (e.g. catalog.npz for pretraining).
 
+--start-from takes a checkpoint for the generator: a U-Net best.pt from train.py, or a
+gan_last.pt from an earlier run of this script. A gan_last.pt also holds its critic, which
+is loaded too: when fine-tuning, the critic then already knows what real filet looks like.
+
+At the start it writes out/gan_settings.json: arguments, data file, sizes, device, start time.
 Every --every epochs it writes, next to train.py's files without touching them:
   checkpoints/gan_last.pt                     generator + critic
   out/gan_log.csv                             epoch, losses, test L1, test IoU
@@ -27,7 +33,7 @@ import torch
 from torch import nn
 
 from model import PatchDiscriminator, UNet
-from train import CHANNELS, Figures, progress, sample_sheet
+from train import CHANNELS, Figures, progress, sample_sheet, save_settings
 
 HERE = Path(__file__).resolve().parent
 
@@ -40,24 +46,29 @@ def adversarial(scores, real):
 def main():
     args = argparse.ArgumentParser()
     args.add_argument("--input", choices=CHANNELS, default="shape", help="what the generator is given (see train.py)")
+    args.add_argument("--data", type=Path, default="dataset.npz", help="data file in generator/c_model/ or a full path")
     args.add_argument("--epochs", type=int, default=300)
     args.add_argument("--batch", type=int, default=16)
     args.add_argument("--lr", type=float, default=2e-4)
     args.add_argument("--l1", type=float, default=100, help="weight of L1 against the adversarial loss")
     args.add_argument("--every", type=int, default=10, help="test, save and draw samples every N epochs")
     args.add_argument("--width", type=int, default=32, help="channels in the generator's first layer")
-    args.add_argument("--start-from", type=Path, help="U-Net checkpoint from train.py to start the generator from")
+    args.add_argument("--start-from", type=Path,
+                      help="checkpoint to start from: best.pt from train.py, or gan_last.pt (critic loaded too)")
     args.add_argument("--quick", action="store_true", help="2 epochs of 3 batches, to check the code runs")
     args = args.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    data = np.load(HERE / "dataset.npz")
+    data_path = HERE / args.data  # a full path stays as it is
+    data = np.load(data_path)
     test = data["test"]
     train_set, test_set = Figures(data, ~test, True, args.input), Figures(data, test, False, args.input)
     loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch, shuffle=True, drop_last=True)
     x_test, y_test = (torch.stack(t).to(device) for t in zip(*[test_set[i] for i in range(len(test_set))]))
 
     gen = UNet(c_in=CHANNELS[args.input], width=args.width).to(device)
+    critic = PatchDiscriminator(c_in=CHANNELS[args.input] + 1).to(device)
+    critic_loaded = False
     if args.start_from:
         state = torch.load(args.start_from, map_location=device)
         if state["width"] != args.width:
@@ -65,7 +76,9 @@ def main():
         if state.get("input", "stroke") != args.input:
             raise SystemExit(f"{args.start_from} was trained with --input {state.get('input', 'stroke')}")
         gen.load_state_dict(state["model"])
-    critic = PatchDiscriminator(c_in=CHANNELS[args.input] + 1).to(device)
+        if "critic" in state:  # only gan_last.pt has one; a U-Net best.pt starts a fresh critic
+            critic.load_state_dict(state["critic"])
+            critic_loaded = True
     # betas (0.5, 0.999): the pix2pix setting; less momentum keeps the two networks from overshooting
     opt_g = torch.optim.Adam(gen.parameters(), lr=args.lr, betas=(0.5, 0.999))
     opt_d = torch.optim.Adam(critic.parameters(), lr=args.lr, betas=(0.5, 0.999))
@@ -73,13 +86,15 @@ def main():
     scheds = [torch.optim.lr_scheduler.CosineAnnealingLR(o, epochs) for o in (opt_g, opt_d)]
     (HERE / "checkpoints").mkdir(exist_ok=True)
     (HERE / "out").mkdir(exist_ok=True)
+    save_settings(HERE / "out" / "gan_settings.json", args, data_path, len(train_set), len(test_set), device)
     log = open(HERE / "out" / "gan_log.csv", "w", newline="")
     writer = csv.writer(log)
     writer.writerow(["epoch", "critic_loss", "gen_adv_loss", "gen_l1", "test_l1", "test_iou"])
-    print(f"{len(train_set)} train, {len(test_set)} test figures on {device}, "
+    print(f"{len(train_set)} train, {len(test_set)} test items from {data_path.name} on {device}, "
           f"input {args.input}, generator {sum(p.numel() for p in gen.parameters()) / 1e6:.1f}M, "
           f"critic {sum(p.numel() for p in critic.parameters()) / 1e6:.1f}M parameters"
-          + (f", generator from {args.start_from}" if args.start_from else ""))
+          + (f", generator from {args.start_from}" if args.start_from else "")
+          + (", critic loaded too" if critic_loaded else ""))
 
     start = time.time()
     for epoch in range(1, epochs + 1):
