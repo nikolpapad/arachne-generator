@@ -9,3 +9,4 @@ generator/c_model/dataset.npz
 generator/c_model/catalog.npz
 generator/c_model/out/
 generator/c_model/checkpoints/
+generator/c_model/runs/run2
